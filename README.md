@@ -15,7 +15,7 @@ Kişisel kilo takip uygulaması. Tek amacı var: **can sıkıntısından yemeyi 
 | **Yemek** | Fotoğrafla veya elle öğün ekleme, hazır Türk yemekleri listesi, günlük toplam |
 | **Sıkıntı** | `CANIM SIKILIYOR` butonu, 90 saniyelik görev, "gerçekten aç mıyım" testi, atlatma sayacı |
 | **Sağlık** | Tansiyon, uyku ve nefeste kilo düştükçe ne kazanıldığını gösteren yol haritaları |
-| **Ayarlar** | Profil, hedefler, koç tonu, bildirimler, API anahtarı, yedekleme (⚙ simgesinden açılır) |
+| **Ayarlar** | Profil, hedefler, koç tonu, bildirimler, fotoğraf analizi yöntemi, yedekleme (⚙ simgesinden açılır) |
 
 ### Can sıkıntısı butonu
 Yemeden önce basılır. 90 saniyelik geri sayım başlar ve rastgele bir görev verir (su iç, 20 şınav, yürü, duş al, dişini fırçala…). Sonunda "Yaptım, geçti" veya "Yine de yedim" işaretlenir. Atlatılan her kriz sayılır ve kaç kalori kurtardığın gösterilir.
@@ -49,17 +49,28 @@ Bildirime dokununca doğrudan ilgili ekran açılır — tehlike saati bildirimi
 Sunucu yok, push servisi yok; her şey cihazda üretilir. Ana ekrana kurulu Chrome'da arka planda da çalışır (`periodicSync`); diğer durumlarda uygulama açık ya da yakın zamanda kullanılmışken gelir. Ayarlar sayfası hangi modda olduğunu yazar.
 
 ### Fotoğrafla kalori
-Yemeğin fotoğrafını çek → Claude görüntüyü analiz eder → porsiyon tahmini, kalori, protein ve **somut sonuç cümlesi** döner. Sonra üç seçenek: `Yedim, ekle` · `Yarısını yedim` · `Yemedim 💪`.
 
-Anahtar yoksa fotoğraf yine kaydedilir, kaloriyi elle yazarsın.
+Üç yöntem var, Ayarlar'dan seçilir.
 
-**API mümkün olduğunca az kullanılır:**
-- Elle yazdığın yemekler **87 kalemlik yerel veritabanından** bulunur — yazmaya başladığın anda kalori ve protein kendiliğinden dolar, API'ye hiç gidilmez.
-- Varsayılan model **Haiku** (Ayarlar'dan Sonnet'e alınabilir).
-- Fotoğraf 600 px'e küçültülür: jeton maliyeti ≈ (en × boy) / 750 olduğu için bu, 900 px'e göre maliyeti yarıya indirir; porsiyon tahmininde kayda değer fark yaratmaz.
-- İstem kısa tutulur, cevap 300 jetonla sınırlıdır.
+**📲 Telefondaki uygulama (varsayılan, ücretsiz).** Telefonundaki Claude ya da ChatGPT uygulamasını kullanır. Fotoğrafı çek → "Uygulamaya gönder" → paylaş sayfasından Claude'u seç (hazır istem fotoğrafla birlikte gider) → gelen cevabı uygulamaya yapıştır. Cevap JSON da olabilir düz metin de; *"Adana kebap, yaklaşık 650 kcal ve 35 g protein"* cümlesinden de rakamları çıkarır.
 
-Sonuç: fotoğraf başına yaklaşık **0.1 cent**. Günde 3 fotoğraf ≈ ayda 10 cent. Ayarlar sayfası o ayki çağrı sayısını, jetonu ve tahmini tutarı gösterir.
+Android'de daha kısası var: uygulama bir **paylaşım hedefi** olarak kayıtlı, yani Claude'daki cevabı "Yeniden 104"e paylaştığında sonuç doğrudan ekrana düşer.
+
+> **Neden doğrudan bağlanmıyor?** Telefondaki Claude/ChatGPT uygulaması API değil. Abonelik (Claude Pro, ChatGPT Plus) ile API erişimi ayrı ürünler, ayrı faturalanır; bir web sayfasının o uygulamaya prompt gönderip cevabı programatik olarak alması için herhangi bir genel arayüz yok. Paylaş sayfası bu yüzden köprü: birkaç dokunuş fazla, ama sıfır ek maliyet.
+
+**⚡ Doğrudan API.** Tek dokunuş, uygulamadan çıkmadan. Anthropic Console'dan bir anahtar gerekir.
+
+**✍️ Kapalı.** Fotoğraf kaydedilir, kaloriyi elle yazarsın.
+
+Hangi yöntem olursa olsun sonuç aynı ekranda çıkar ve üç seçenek sunar: `Yedim, ekle` · `Yarısını yedim` · `Yemedim 💪` (sonuncusu sıkıntı sayacına yazılır).
+
+**API kullanımı zaten en aza indirilmiş durumda:**
+- Elle yazdığın yemekler **87 kalemlik yerel veritabanından** bulunur — yazmaya başladığın anda kalori ve protein kendiliğinden dolar, hiçbir yere istek gitmez.
+- Varsayılan model **Haiku 4.5** ($1/$5 per MTok); Sonnet 5 ($2/$10) seçilebilir.
+- Fotoğraf 600 px'e küçültülür: jeton maliyeti ≈ (en × boy) / 750 olduğu için bu, 900 px'e göre maliyeti yarıya indirir.
+- İstem kısa, cevap 300 jetonla sınırlı.
+
+Ölçülen sonuç: fotoğraf başına **$0.00116** (Haiku) — yani 0.12 cent. Günde 3 fotoğraf ≈ ayda 10 cent. Sonnet ile iki katı. Ayarlar o ayki çağrı sayısını, jetonu ve tahmini tutarı gösterir.
 
 ### Koç tonu
 Ayarlardan üç mod: **Sert** (suçluluk üzerinden), **Soğuk** (yalnız rakamlar), **Koç** (uyarır, alternatif sunar). Kötü günde tonu yumuşat, iyi günde sertleştir.

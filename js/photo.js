@@ -6,7 +6,11 @@ const Photo = {
   MAX_SIDE: 600,
 
   model() {
-    return Store.data.apiModel || 'claude-haiku-4-5-20251001';
+    return Store.data.apiModel || 'claude-haiku-4-5';
+  },
+
+  mode() {
+    return Store.data.analyzeMode || 'app';
   },
 
   /* Fotoğrafı küçült: hem depolama hem jeton maliyeti için */
@@ -57,6 +61,93 @@ const Photo = {
     return `Türk mutfağı. Porsiyonu tabak oranından tahmin et. Bugün ${eaten}/${t.kcal} kcal alındı.
 Sadece JSON döndür:
 {"name":"yemek adı","items":["bileşen (g)"],"kcal":0,"protein":0,"confidence":"dusuk|orta|yuksek","note":"tek cümle"}`;
+  },
+
+  /* Telefondaki Claude/ChatGPT uygulamasına gönderilecek, kendi başına
+     anlaşılır istem. API'den farklı olarak bağlam burada açıkça yazılır. */
+  sharePrompt() {
+    const t = Store.data.targets;
+    const eaten = Store.dayTotals().kcal;
+    return `Bu fotoğraftaki yemeği analiz et. Türk mutfağı, porsiyonu tabak oranından tahmin et.
+Bugün ${eaten}/${t.kcal} kcal aldım.
+
+Cevabı sadece şu JSON olarak ver:
+{"name":"yemek adı","kcal":0,"protein":0,"note":"tek cümle porsiyon notu"}`;
+  },
+
+  async dataUrlToFile(dataUrl, name) {
+    const blob = await (await fetch(dataUrl)).blob();
+    return new File([blob], name || 'yemek.jpg', { type: 'image/jpeg' });
+  },
+
+  /* Paylaş sayfasını aç — kullanıcı Claude ya da ChatGPT uygulamasını seçer */
+  async shareToApp(dataUrl) {
+    const text = this.sharePrompt();
+    let file = null;
+    try { file = await this.dataUrlToFile(dataUrl); } catch (e) {}
+
+    if (navigator.share) {
+      try {
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], text });
+          return 'shared';
+        }
+        await navigator.share({ text });
+        return 'shared-text';
+      } catch (e) {
+        if (e && e.name === 'AbortError') return 'cancelled';
+      }
+    }
+    // Paylaşım yoksa en azından istemi panoya koy
+    try {
+      await navigator.clipboard.writeText(text);
+      return 'copied';
+    } catch (e) {
+      return 'unsupported';
+    }
+  },
+
+  /* Claude/ChatGPT cevabını serbest metinden de okuyabilen ayrıştırıcı */
+  parseAnswer(text) {
+    if (!text || !text.trim()) return null;
+
+    // Önce JSON dene
+    const j = text.match(/\{[\s\S]*?\}/);
+    if (j) {
+      try {
+        const o = JSON.parse(j[0]);
+        if (o.kcal !== undefined || o.calories !== undefined) {
+          return {
+            name: o.name || o.yemek || 'Yemek',
+            kcal: Math.round(+(o.kcal ?? o.calories) || 0),
+            protein: Math.round(+(o.protein || 0)),
+            note: o.note || ''
+          };
+        }
+      } catch (e) { /* düz metne düş */ }
+    }
+
+    // Düz metin: "650 kcal", "kalori: 650", "protein 35 g"
+    const norm = text.replace(/\./g, '').toLocaleLowerCase('tr');
+    const kcalM = norm.match(/(\d{2,5})\s*(?:kcal|kalori|cal\b)/) ||
+                  norm.match(/(?:kcal|kalori)\s*[:=]?\s*(\d{2,5})/);
+    if (!kcalM) return null;
+    const protM = norm.match(/(\d{1,3})\s*g(?:r|ram)?\s*protein/) ||
+                  norm.match(/protein\s*[:=]?\s*(\d{1,3})/);
+
+    // İlk satır genelde yemeğin adı olur — ama rakam/kalori cümlesiyse ad sayma
+    const firstLine = text.trim().split('\n')[0].slice(0, 60).replace(/[*#:]/g, '').trim();
+    const looksLikeName = firstLine &&
+      !/^\d/.test(firstLine) &&
+      !/\d{2,5}\s*(kcal|kalori)/i.test(firstLine) &&
+      firstLine.length <= 45;
+
+    return {
+      name: looksLikeName ? firstLine : 'Yemek',
+      kcal: parseInt(kcalM[1], 10),
+      protein: protM ? parseInt(protM[1], 10) : 0,
+      note: ''
+    };
   },
 
   async analyze(dataUrl) {

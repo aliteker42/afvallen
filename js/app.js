@@ -19,9 +19,29 @@ function init() {
   bindHunger();
   bindSettings();
   bindNotify();
+  updatePhotoHint();
   renderAll();
   registerSW();
+  handleIncomingShare();
   openFromHash();
+}
+
+/* Claude/ChatGPT'den paylaşılan cevap uygulamaya düştüğünde */
+function handleIncomingShare() {
+  const q = new URLSearchParams(location.search);
+  const text = [q.get('text'), q.get('title')].filter(Boolean).join('\n');
+  if (!text) return;
+  history.replaceState(null, '', location.pathname);
+
+  const parsed = Photo.parseAnswer(text);
+  const pending = Store.takePending();
+  go('yemek');
+  if (!parsed) {
+    showPasteBox(pending && pending.photo, text);
+    toast('Kalori okunamadı, elle düzelt', 'bad');
+    return;
+  }
+  showParsedResult(parsed, pending && pending.photo);
 }
 
 /* Bildirime tıklanınca ilgili ekranı aç.
@@ -378,7 +398,14 @@ async function onPhoto(e) {
   }
   pendingPhoto = thumb;
 
-  if (!Photo.hasKey()) {
+  const mode = Photo.mode();
+
+  if (mode === 'app') {
+    await shareForAnalysis(box, thumb, full);
+    return;
+  }
+
+  if (mode === 'off' || !Photo.hasKey()) {
     showPhotoManual(box, thumb);
     return;
   }
@@ -396,7 +423,73 @@ async function onPhoto(e) {
   }
 }
 
+/* Telefondaki Claude/ChatGPT uygulamasına gönder, cevabı geri bekle */
+async function shareForAnalysis(box, thumb, full) {
+  Store.setPending(thumb);
+  box.innerHTML = `
+    <img src="${thumb}" alt="">
+    <div class="pr-verdict">Fotoğrafı Claude ya da ChatGPT uygulamasına gönder, cevabı buraya yapıştır.</div>
+    <div class="pr-actions" style="margin-bottom:12px">
+      <button class="go" id="sh-send">📲 Uygulamaya gönder</button>
+      <button id="sh-cancel">Vazgeç</button>
+    </div>
+    <div id="sh-paste"></div>`;
+
+  $('#sh-cancel').addEventListener('click', () => {
+    Store.takePending();
+    box.classList.add('hidden'); box.innerHTML = '';
+  });
+
+  $('#sh-send').addEventListener('click', async () => {
+    const res = await Photo.shareToApp(full);
+    if (res === 'cancelled') return;
+    if (res === 'copied') toast('İstem panoya kopyalandı');
+    if (res === 'unsupported') toast('Paylaşım desteklenmiyor, istemi elle yaz', 'bad');
+  });
+
+  showPasteBox(thumb, '', $('#sh-paste'));
+}
+
+/* Cevabın yapıştırılacağı alan */
+function showPasteBox(thumb, prefill, host) {
+  const box = $('#photo-result');
+  box.classList.remove('hidden');
+  const target = host || box;
+  if (!host) {
+    box.innerHTML = thumb ? `<img src="${thumb}" alt="">` : '';
+  }
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <div class="label" style="margin-top:8px">Cevabı yapıştır</div>
+    <textarea id="paste-answer" class="paste-area" rows="4"
+      placeholder='{"name":"Adana kebap","kcal":650,"protein":35}  ya da düz metin'>${escapeHtml(prefill || '')}</textarea>
+    <div class="pr-actions">
+      <button class="go" id="paste-read">Oku ve ekle</button>
+      <button id="paste-manual">Elle gir</button>
+    </div>`;
+  target.appendChild(wrap);
+
+  $('#paste-read').addEventListener('click', () => {
+    const parsed = Photo.parseAnswer($('#paste-answer').value);
+    if (!parsed) { toast('Kalori bulunamadı — elle gir', 'bad'); return; }
+    showParsedResult(parsed, thumb);
+  });
+  $('#paste-manual').addEventListener('click', () => {
+    box.innerHTML = thumb ? `<img src="${thumb}" alt="">` : '';
+    showPhotoManual(box, thumb, true);
+  });
+}
+
+/* Yapıştırılan cevabı API sonucuyla aynı ekranda göster */
+function showParsedResult(parsed, thumb) {
+  showPhotoResult($('#photo-result'), thumb || '', {
+    name: parsed.name, items: [], kcal: parsed.kcal,
+    protein: parsed.protein, confidence: 'orta', note: parsed.note
+  });
+}
+
 function showPhotoManual(box, thumb, append) {
+  box.classList.remove('hidden');
   const html = `
     ${append ? '' : `<img src="${thumb}" alt="">`}
     <div class="pr-verdict">${append ? 'Kaloriyi elle gir:' : 'Analiz için Ayarlar\'dan API anahtarı gerekiyor. Şimdilik elle gir:'}</div>
@@ -428,6 +521,7 @@ function showPhotoManual(box, thumb, append) {
 }
 
 function showPhotoResult(box, thumb, r) {
+  box.classList.remove('hidden');   // paylaşım yolundan gelindiğinde kart gizli olabiliyor
   const p = Store.data.profile;
   const eaten = Store.dayTotals().kcal;
   const imp = Calc.mealImpact(r.kcal, Store.currentKg(), p, Store.data.targets.kcal, eaten);
@@ -436,7 +530,7 @@ function showPhotoResult(box, thumb, r) {
   const confLabel = { dusuk: 'düşük', orta: 'orta', yuksek: 'yüksek' }[r.confidence] || r.confidence;
 
   box.innerHTML = `
-    <img src="${thumb}" alt="">
+    ${thumb ? `<img src="${thumb}" alt="">` : ''}
     <div style="font-weight:700;font-size:16px;margin-bottom:4px">${escapeHtml(r.name)}</div>
     <div class="pr-nums">
       <span><b>${r.kcal}</b> kcal</span>
@@ -606,6 +700,16 @@ function answerHunger(v) {
   $('#q-no').onclick = () => { $('#overlay-hunger').classList.add('hidden'); bindHunger(); };
 }
 
+function updatePhotoHint() {
+  const mode = Photo.mode();
+  $('#photo-hint').textContent =
+    mode === 'app' ? 'Fotoğrafı telefondaki Claude ya da ChatGPT uygulamasına gönderip cevabı geri yapıştıracaksın. Ücretsiz.'
+    : mode === 'api' ? (Photo.hasKey()
+        ? 'Anahtar kayıtlı. Fotoğraf çek, kaloriyi tahmin edeyim.'
+        : 'Analiz için Ayarlar\'dan Claude API anahtarını gir.')
+    : 'Fotoğraf kaydedilir, kaloriyi elle yazarsın.';
+}
+
 /* ---------------- bildirimler ---------------- */
 function bindNotify() {
   $('#ntf-slots').innerHTML = Notify.SLOTS.map(sl => `
@@ -703,10 +807,18 @@ function bindSettings() {
   $('#set-apikey').addEventListener('change', () => {
     Store.data.apiKey = $('#set-apikey').value.trim();
     Store.save();
-    $('#photo-hint').textContent = Photo.hasKey()
-      ? 'Anahtar kayıtlı. Fotoğraf çek, kaloriyi tahmin edeyim.'
-      : 'Analiz için Ayarlar\'dan Claude API anahtarını gir.';
+    updatePhotoHint();
     toast(Photo.hasKey() ? 'Anahtar kaydedildi' : 'Anahtar silindi');
+  });
+
+  $('#mode-picker').addEventListener('click', e => {
+    const b = e.target.closest('[data-mode]');
+    if (!b) return;
+    Store.data.analyzeMode = b.dataset.mode;
+    Store.save();
+    fillSettings();
+    updatePhotoHint();
+    toast('Yöntem değişti');
   });
 
   $('#set-model').addEventListener('change', () => {
@@ -764,6 +876,15 @@ function fillSettings() {
   $('#tdee-hint').textContent =
     `Bazal yakım ${Calc.bmr(kg, p.heightCm, p.age, p.sex)} kcal · günlük toplam yakım ≈ ${tdee} kcal. ` +
     `${t.kcal} kcal ile günlük açık ${tdee - t.kcal} kcal ≈ haftada ${weekly.toFixed(2)} kg.`;
+
+  const mode = Photo.mode();
+  $$('.mode').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  $('#api-settings').classList.toggle('hidden', mode !== 'api');
+  $('#mode-hint').textContent = {
+    app: 'Telefondaki Claude ya da ChatGPT uygulaması API değildir — abonelik ayrı, API ayrı faturalanır ve bir web sayfası o uygulamaya doğrudan bağlanamaz. Bu yüzden köprü paylaş sayfası: fotoğraf oraya gider, cevabı geri yapıştırırsın. Android\'de cevabı "Yeniden 104"e paylaşırsan otomatik okunur.',
+    api: 'Tek dokunuş, uygulamadan çıkmadan. Anthropic Console\'dan bir anahtar gerekir.',
+    off: 'Fotoğraf kaydedilir, kaloriyi elle yazarsın. Yerel yemek listesi yine çalışır.'
+  }[mode];
 
   $('#set-model').value = Store.data.apiModel;
   const u = Store.data.apiUsage;

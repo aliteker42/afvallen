@@ -371,3 +371,18 @@ body{
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none !important;transition:none !important}
 }
+
+/* ---------------- Analiz yöntemi seçici ---------------- */
+.mode-picker{display:flex;flex-direction:column;gap:8px;margin:6px 0 14px}
+.mode{text-align:left;background:var(--card-2);border:1px solid var(--line);color:var(--txt-2);
+  border-radius:13px;padding:13px;transition:border-color .15s,background .15s}
+.mode.active{border-color:var(--accent);background:#12251a;color:var(--txt)}
+.mode-t{font-weight:700;font-size:14.5px;color:var(--txt);margin-bottom:3px}
+.mode-d{font-size:12.5px;line-height:1.5}
+.mode.active .mode-d{color:var(--txt-2)}
+.mode-d b{color:var(--accent)}
+
+.paste-area{width:100%;background:#0b0f16;border:1px solid var(--line);color:var(--txt);
+  border-radius:11px;padding:11px;font-size:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  line-height:1.5;resize:vertical;margin:6px 0 10px}
+.paste-area:focus{outline:none;border-color:var(--accent)}

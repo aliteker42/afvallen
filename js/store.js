@@ -18,7 +18,8 @@ const DEFAULTS = {
   meals: [],     // {id, d, ts, name, kcal, protein, photo}
   boredom: [],   // {id, ts, task, outcome:'resisted'|'ate'}
   apiKey: '',
-  apiModel: 'claude-haiku-4-5-20251001',
+  apiModel: 'claude-haiku-4-5',
+  analyzeMode: 'app',   // 'app' = telefondaki Claude/ChatGPT'ye gönder, 'api' = doğrudan API, 'off' = elle
   apiUsage: { month: '', calls: 0, inTok: 0, outTok: 0 },
   notify: {
     enabled: false,
@@ -26,6 +27,7 @@ const DEFAULTS = {
     times: { sabah: '08:00', ogle: '13:00', tehlike: '21:00', motivasyon: '17:00' },
     sent: []
   },
+  pending: null,        // paylaşıma gönderilen fotoğraf, cevap dönene kadar bekler
   createdAt: null
 };
 
@@ -105,6 +107,19 @@ const Store = {
     return this.data.boredom.filter(b => b.outcome === 'resisted').length;
   },
 
+  /* --- bekleyen paylaşım --- */
+  setPending(photo) {
+    this.data.pending = { photo, ts: Date.now() };
+    this.save();
+  },
+  takePending(maxAgeMs) {
+    const p = this.data.pending;
+    this.data.pending = null;
+    this.save();
+    if (!p) return null;
+    return (Date.now() - p.ts) < (maxAgeMs || 3600000) ? p : null;
+  },
+
   /* --- API kullanımı --- */
   trackApi(inTok, outTok) {
     const m = today().slice(0, 7);
@@ -119,8 +134,8 @@ const Store = {
   apiCost() {
     const u = this.data.apiUsage;
     const haiku = this.data.apiModel.includes('haiku');
-    const inRate = haiku ? 1 : 3;      // $ / milyon giriş jetonu
-    const outRate = haiku ? 5 : 15;    // $ / milyon çıkış jetonu
+    const inRate = haiku ? 1 : 2;      // $ / milyon giriş jetonu
+    const outRate = haiku ? 5 : 10;    // $ / milyon çıkış jetonu
     return (u.inTok / 1e6) * inRate + (u.outTok / 1e6) * outRate;
   },
 

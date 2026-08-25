@@ -311,15 +311,33 @@
 
     <div class="card">
       <div class="label">Fotoğraf analizi</div>
-      <div class="form-row"><label>Claude API anahtarı</label><input type="password" id="set-apikey" placeholder="sk-ant-..."></div>
-      <div class="form-row"><label>Model</label>
-        <select id="set-model">
-          <option value="claude-haiku-4-5-20251001">Ucuz (Haiku)</option>
-          <option value="claude-sonnet-5">İsabetli (Sonnet)</option>
-        </select>
+      <div class="mode-picker" id="mode-picker">
+        <button class="mode" data-mode="app">
+          <div class="mode-t">📲 Telefondaki uygulama</div>
+          <div class="mode-d">Fotoğrafı Claude ya da ChatGPT uygulamasına gönder, cevabı geri yapıştır. <b>Ücretsiz</b> — mevcut aboneliğini kullanır.</div>
+        </button>
+        <button class="mode" data-mode="api">
+          <div class="mode-t">⚡ Doğrudan API</div>
+          <div class="mode-d">Tek dokunuş, uygulamadan çıkmadan. API anahtarı ve fotoğraf başına ~0.1 cent gerekir.</div>
+        </button>
+        <button class="mode" data-mode="off">
+          <div class="mode-t">✍️ Kapalı</div>
+          <div class="mode-d">Fotoğraf kaydedilir, kaloriyi elle yazarsın.</div>
+        </button>
       </div>
-      <div class="usage-box" id="usage-box">—</div>
-      <div class="hint">Anahtar sadece bu telefonda saklanır. Fotoğraf doğrudan Anthropic'e gider, arada başka sunucu yok. Elle yazdığın yemekler yerel listeden bulunur, API'ye hiç gitmez.</div>
+
+      <div id="api-settings">
+        <div class="form-row"><label>Claude API anahtarı</label><input type="password" id="set-apikey" placeholder="sk-ant-..."></div>
+        <div class="form-row"><label>Model</label>
+          <select id="set-model">
+            <option value="claude-haiku-4-5">Ucuz (Haiku 4.5)</option>
+            <option value="claude-sonnet-5">İsabetli (Sonnet 5)</option>
+          </select>
+        </div>
+        <div class="usage-box" id="usage-box">—</div>
+        <div class="hint">Anahtar sadece bu telefonda saklanır. Fotoğraf doğrudan Anthropic'e gider, arada başka sunucu yok.</div>
+      </div>
+      <div class="hint" id="mode-hint">—</div>
     </div>
 
     <div class="card">
