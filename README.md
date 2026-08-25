@@ -70,7 +70,15 @@ Ayarlardan üç mod: **Sert** (suçluluk üzerinden), **Soğuk** (yalnız rakaml
 
 ### Yayına almak
 
-**Seçenek A — GitHub Pages (otomatik).** Depoda hazır bir Actions iş akışı var (`.github/workflows/deploy.yml`): her push'ta dosyaları kontrol eder ve Pages'e yayınlar. Tek yapman gereken depo ayarlarından **Settings → Pages → Source: GitHub Actions** seçmek. Sonrasında her commit kendiliğinden canlıya çıkar.
+**Seçenek A — GitHub Pages (otomatik).** Depoda hazır bir Actions iş akışı var (`.github/workflows/deploy.yml`). Tek seferlik bir tık gerekiyor:
+
+> **Settings → Pages → Source: "GitHub Actions"**
+
+Bunu iş akışının kendisi yapamıyor — `GITHUB_TOKEN` Pages sitesi oluşturma yetkisine sahip değil (`Resource not accessible by integration`). Ayar açılana kadar iş akışı kırmızıya düşmez: dosyaları kontrol eder, "Pages kapalı" uyarısı bırakır ve yeşil geçer. Ayarı açtığın anda sonraki push kendiliğinden yayına çıkar.
+
+Not: `github-pages` ortamı varsayılan olarak yalnızca ana daldan yayına izin verebilir. Feature dalından yayınlanmıyorsa dalı `main`'e birleştir ya da ortam ayarlarından dalı ekle.
+
+Her push'ta çalışan kontroller: tüm JS dosyalarının sözdizimi, manifest'teki simgelerin varlığı, `index.html`'in var olmayan dosyaya bakmaması, `sw.js` önbelleğinin `js/` ve `css/` altındaki her dosyayı içermesi.
 
 **Seçenek B — kendi hostingin.** Build adımı yok: klasörün içeriğini olduğu gibi FTP'yle at, bitti. Tek şart **HTTPS** — service worker, bildirimler ve "ana ekrana ekle" yalnızca HTTPS'te çalışır.
 
