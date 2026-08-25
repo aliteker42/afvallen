@@ -17,7 +17,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  kontrol:
+    name: Dosya kontrolü
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JavaScript sözdizimi
+        run: |
+          for f in js/*.js sw.js; do
+            node --check "$f" || exit 1
+          done
+
+      - name: Manifest ve varlıklar
+        run: |
+          node -e "
+            const m = JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8'));
+            const fs = require('fs');
+            for (const i of m.icons) {
+              if (!fs.existsSync(i.src)) throw new Error('Eksik simge: ' + i.src);
+            }
+            const html = fs.readFileSync('index.html','utf8');
+            for (const m2 of html.matchAll(/(?:src|href)=\"((?:js|css|icons)\/[^\"]+)\"/g)) {
+              if (!fs.existsSync(m2[1])) throw new Error('index.html eksik dosyaya bakıyor: ' + m2[1]);
+            }
+            console.log('Manifest, simgeler ve index.html bağlantıları tamam.');
+          "
+
+      - name: Service worker önbelleği eksiksiz mi
+        run: |
+          node -e "
+            const fs = require('fs');
+            const sw = fs.readFileSync('sw.js','utf8');
+            const listed = [...sw.matchAll(/'\.\/(js\/[^']+|css\/[^']+)'/g)].map(m => m[1]);
+            const onDisk = [...fs.readdirSync('js').map(f => 'js/' + f),
+                            ...fs.readdirSync('css').map(f => 'css/' + f)];
+            const missing = onDisk.filter(f => !listed.includes(f));
+            if (missing.length) throw new Error('sw.js önbelleğinde eksik: ' + missing.join(', '));
+            console.log('Service worker tüm dosyaları önbelleğe alıyor.');
+          "
+
+  yayin:
+    name: GitHub Pages
+    needs: kontrol
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -25,22 +67,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Sözdizimi kontrolü
-        run: |
-          for f in js/*.js sw.js; do
-            node --check "$f" || exit 1
-          done
-          node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8'))"
-          echo "Tüm dosyalar geçerli."
+      # Pages depo ayarlarından açılmamışsa bu adım düşer; iş akışını
+      # kırmızıya boyamak yerine ne yapılması gerektiğini yazıp geçiyoruz.
+      - id: pages
+        uses: actions/configure-pages@v5
+        continue-on-error: true
 
-      # enablement: depo ayarlarında Pages kapalıysa iş akışı kendisi açar
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
+      - name: Pages kapalı
+        if: steps.pages.outcome == 'failure'
+        run: |
+          echo "::warning title=Pages kapalı::Depo ayarlarından Settings → Pages → Source: \"GitHub Actions\" seçildiğinde bu iş akışı yayınlamaya başlar. O zamana kadar dosyalar kontrol edilip geçiliyor."
 
       - uses: actions/upload-pages-artifact@v3
+        if: steps.pages.outcome == 'success'
         with:
           path: .
 
       - id: deploy
+        if: steps.pages.outcome == 'success'
         uses: actions/deploy-pages@v4
