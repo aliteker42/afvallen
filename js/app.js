@@ -172,7 +172,17 @@ function renderToday() {
     $('#card-gain').classList.add('hidden');
   }
 
+  renderDeen();
   $('#coach-text').textContent = Coach.pick('idle');
+}
+
+function renderDeen() {
+  const card = $('#card-deen');
+  if (!Deen.enabled()) { card.classList.add('hidden'); return; }
+  const d = Deen.ofTheDay();
+  card.classList.remove('hidden');
+  $('#deen-text').textContent = d.t;
+  $('#deen-src').textContent = d.k;
 }
 
 /* ---------------- oyun ---------------- */
@@ -809,6 +819,15 @@ function openPanic() {
   vibrate(60);
   $('#overlay-panic').classList.remove('hidden');
   $('#panic-msg').textContent = Coach.pick('panic');
+  const pd = $('#panic-deen');
+  if (Deen.enabled()) {
+    const d = Deen.forPanic();
+    $('#panic-deen-text').textContent = d.t;
+    $('#panic-deen-src').textContent = d.k;
+    pd.classList.remove('hidden');
+  } else {
+    pd.classList.add('hidden');
+  }
   newTask();
   startTimer(90);
 }
@@ -933,6 +952,36 @@ function updatePhotoHint() {
   $('#photo-hint').textContent = Photo.hasKey()
     ? 'Fotoğrafı çek, sonra yöntemi seç: telefondaki Claude/ChatGPT uygulamasına gönder (ücretsiz), API ile analiz et ya da elle yaz.'
     : 'Fotoğrafı çek, sonra yöntemi seç: telefondaki Claude/ChatGPT uygulamasına gönder (ücretsiz) ya da elle yaz. API için Ayarlar\'dan anahtar gir.';
+}
+
+function showDeenList() {
+  let ov = $('#deen-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'deen-overlay';
+    ov.className = 'overlay deen-overlay';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = `
+    <div class="deen-sheet">
+      <div class="deen-head">
+        <h2>Âyet ve hadisler</h2>
+        <button class="icon-btn" id="deen-close">✕</button>
+      </div>
+      <p class="hint" style="margin:0 0 14px">
+        Her metnin altında kaynağı yazılı: sûre ve âyet numarası ya da hadis külliyatı,
+        bab ve numara. Meal ve numaralar birden fazla bağımsız kaynakla karşılaştırıldı;
+        yine de kendin kontrol etmek istersen kaynaklar bunun için burada.
+      </p>
+      ${Deen.all().map(d => `
+        <div class="card deen">
+          <div class="deen-mark">﴾﴿</div>
+          <div class="deen-text">${escapeHtml(d.t)}</div>
+          <div class="deen-src">${escapeHtml(d.k)}</div>
+        </div>`).join('')}
+    </div>`;
+  ov.classList.remove('hidden');
+  $('#deen-close').addEventListener('click', () => ov.classList.add('hidden'));
 }
 
 /* ---------------- bildirimler ---------------- */
@@ -1072,6 +1121,15 @@ function bindSettings() {
     toast('Ton değişti');
   });
 
+  $('#deen-toggle').addEventListener('click', () => {
+    Store.data.deen = !Deen.enabled();
+    Store.save();
+    fillSettings(); renderDeen();
+    toast(Deen.enabled() ? 'Açık' : 'Kapalı');
+  });
+
+  $('#deen-list-btn').addEventListener('click', showDeenList);
+
   $('#btn-export').addEventListener('click', doExport);
   $('#import-input').addEventListener('change', doImport);
   $('#btn-reset').addEventListener('click', () => {
@@ -1094,6 +1152,8 @@ function fillSettings() {
   $('#set-protein').value = t.protein;
   $('#set-apikey').value = Store.data.apiKey || '';
   $$('.tone').forEach(b => b.classList.toggle('active', b.dataset.tone === p.tone));
+  $('#deen-toggle').classList.toggle('on', Deen.enabled());
+  $('#deen-toggle').setAttribute('aria-checked', String(Deen.enabled()));
 
   const kg = Store.currentKg();
   const tdee = Calc.tdee(kg, p);

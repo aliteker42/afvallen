@@ -14,6 +14,8 @@ const NOTIFY_POOL = {
   ],
   tehlike: [
     { t: "Tehlike saati 🛑", b: "Akşam yemeğinden sonrası senin zayıf noktan. Bu gece atlat." },
+    { t: "Hadis", b: "\u201cÂdemoğluna belini doğrultacak birkaç lokma yeter.\u201d — Tirmizî, Zühd 47" },
+    { t: "Hadis", b: "\u201cGerçek mücâhid, nefsiyle cihad edendir.\u201d — Tirmizî, nr. 1621" },
     { t: "Mutfağa gitme", b: "Aç değilsin, sıkılıyorsun. Butona bas, 90 saniye ver." },
     { t: "Dur bir saniye", b: "Şimdi yersen bu gece yine tıkanarak uyursun. Buna değer mi?" },
     { t: "Bu his 20 dakika sürer", b: "Pişmanlık 3 gün. Uygulamayı aç, sana bir görev vereyim." },
@@ -21,6 +23,9 @@ const NOTIFY_POOL = {
   ],
   motivasyon: [
     { t: "Hatırlatma", b: "133'ten 104'e indin. Yapabilir misin sorusu çoktan cevaplandı." },
+    { t: "Âyet", b: "\u201cYiyin, için, fakat israf etmeyin. Çünkü O, israf edenleri sevmez.\u201d — A'râf 31" },
+    { t: "Hadis", b: "\u201cAllah katında amellerin en sevimlisi, az da olsa devamlı olanıdır.\u201d — Buhârî, Rikâk 18" },
+    { t: "Hadis", b: "\u201cİki nimet vardır ki insanların çoğu onlar hakkında aldanmıştır: sağlık ve boş vakit.\u201d — Buhârî, nr. 6412" },
     { t: "Tansiyonun düşüyor", b: "Verilen her kilo yaklaşık 1 mmHg. Sessizce kazanıyorsun." },
     { t: "Nefes ve uyku", b: "Terazi yavaş konuşur ama nefesin daha erken haber verir." },
     { t: "Diz yükü", b: "Her 1 kg, yürürken dizlerinden 4 kg'lık baskıyı kaldırıyor." },

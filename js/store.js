@@ -27,6 +27,7 @@ const DEFAULTS = {
     times: { sabah: '08:00', ogle: '13:00', tehlike: '21:00', motivasyon: '17:00' },
     sent: []
   },
+  deen: true,           // günlük âyet/hadis hatırlatması
   pending: null,        // paylaşıma gönderilen fotoğraf, cevap dönene kadar bekler
   game: {
     xp: 0,

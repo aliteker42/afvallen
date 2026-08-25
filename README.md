@@ -17,6 +17,25 @@ Kişisel kilo takip uygulaması. Tek amacı var: **can sıkıntısından yemeyi 
 | **Sağlık** | Tansiyon, uyku ve nefeste kilo düştükçe ne kazanıldığını gösteren yol haritaları |
 | **Ayarlar** | Profil, hedefler, koç tonu, bildirimler, fotoğraf analizi yöntemi, yedekleme (⚙ simgesinden açılır) |
 
+### Âyet ve hadisler
+Kilo, yeme-içme ve nefse hâkimiyetle ilgili **9 metin**. Bugün ekranında günün metni (tarihten türetilir, gün içinde değişmez), sıkıntı ekranında o ana uygun olanlardan biri, ve bildirim havuzunda birkaçı görünür. Ayarlardan kapatılabilir; "Hepsini kaynaklarıyla gör" ile tam liste açılır.
+
+**Her metnin altında kaynağı yazılıdır** — sûre ve âyet numarası ya da hadis külliyatı, bab ve numara. Hiçbiri serbestçe yazılmadı; meal ve numaralar eklenmeden önce birden fazla bağımsız kaynakla karşılaştırıldı.
+
+| Metin | Kaynak |
+|---|---|
+| "Yiyin, için, fakat israf etmeyin…" | A'râf 31 (Diyanet İşleri meali) |
+| "Temiz olanlarından yiyin, taşkınlık etmeyin…" | Tâhâ 81 (Diyanet Vakfı meali) |
+| "Âdemoğlu, midesinden daha kötü bir kap doldurmamıştır…" | Tirmizî, Zühd 47 (nr. 2380); İbn Mâce, Et'ime 50 (nr. 3349) |
+| "İki nimet vardır ki insanların çoğu aldanmıştır: sağlık ve boş vakit." | Buhârî, Rikâk (nr. 6412) |
+| "Amellerin en sevimlisi, az da olsa devamlı olanıdır." | Buhârî, Rikâk 18; Müslim, Müsâfirîn 218 |
+| "Kuvvetli mü'min… daha hayırlı ve daha sevimlidir." | Müslim, Kader 34 (nr. 2664) |
+| "Bedeninin senin üzerinde hakkı vardır." | Buhârî, Savm 51; Müslim, Sıyâm 182 |
+| "Gerçek mücâhid, nefsiyle cihad edendir." | Tirmizî, Fedâilü'l-cihâd 2 (nr. 1621) |
+| "Sabır ve namaz ile Allah'tan yardım isteyin…" | Bakara 153 (Diyanet meali) |
+
+Metinler `js/deen.js` içinde; eklemek ya da çıkarmak isteyen aynı biçimde (metin + kaynak) yazar.
+
 ### Oyun katmanı
 Ayrı bir şey girmen gerekmez — hepsi zaten tuttuğun kayıtlardan beslenir.
 
@@ -159,6 +178,7 @@ js/store.js               localStorage katmanı
 js/calc.js                BMI, TDEE, trend, tahmin, kilometre taşları
 js/health.js              kilo kaybının tansiyon/uyku/nefeste açtığı kazanımlar
 js/game.js                XP, seviye, rozet, günlük görev, haftalık duvar
+js/deen.js                âyet ve hadisler, kaynaklarıyla birlikte
 js/notify.js              bildirim izni ve zamanlama
 js/notify-messages.js     bildirim metinleri (sayfa ve service worker ortak kullanır)
 js/chart.js               bağımlılıksız SVG grafik

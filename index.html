@@ -109,6 +109,12 @@
       </div>
     </div>
 
+    <div class="card deen" id="card-deen">
+      <div class="deen-mark">﴾﴿</div>
+      <div class="deen-text" id="deen-text">—</div>
+      <div class="deen-src" id="deen-src">—</div>
+    </div>
+
     <div class="card coach" id="card-coach">
       <div class="coach-icon">💬</div>
       <div class="coach-text" id="coach-text">—</div>
@@ -348,6 +354,16 @@
     </div>
 
     <div class="card">
+      <div class="label">Âyet ve hadisler</div>
+      <div class="form-row">
+        <label>Günlük hatırlatma</label>
+        <button class="toggle" id="deen-toggle" role="switch" aria-checked="true"><span></span></button>
+      </div>
+      <div class="hint">Kilo, yeme-içme ve nefse hâkimiyetle ilgili 9 metin. Her birinin kaynağı (sûre/âyet ya da hadis külliyatı ve numarası) altında yazılı — istediğin an kontrol edebilirsin. Meal ve numaralar birden fazla bağımsız kaynakla karşılaştırıldı.</div>
+      <button class="secondary-btn" id="deen-list-btn">Hepsini kaynaklarıyla gör</button>
+    </div>
+
+    <div class="card">
       <div class="label">Bildirimler</div>
       <div class="form-row">
         <label>Hatırlatmalar</label>
@@ -429,6 +445,10 @@
         <div class="timer-num" id="timer-num">90</div>
       </div>
       <div class="task-card" id="task-card">—</div>
+      <div class="panic-deen" id="panic-deen">
+        <div class="deen-text" id="panic-deen-text">—</div>
+        <div class="deen-src" id="panic-deen-src">—</div>
+      </div>
       <div class="panic-actions">
         <button class="primary-btn wide" id="btn-panic-done">Yaptım, geçti 💪</button>
         <button class="ghost-btn" id="btn-panic-ate">Yine de yedim</button>
@@ -464,6 +484,7 @@
 <script src="js/photo.js"></script>
 <script src="js/notify-messages.js"></script>
 <script src="js/notify.js"></script>
+<script src="js/deen.js"></script>
 <script src="js/game.js"></script>
 <script src="js/app.js"></script>
 </body>
