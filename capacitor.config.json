@@ -1,0 +1,14 @@
+{
+  "appId": "com.afvallen.app",
+  "appName": "Yeniden 104",
+  "webDir": ".",
+  "server": {
+    "url": "https://aliteker42.github.io/afvallen",
+    "cleartext": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}

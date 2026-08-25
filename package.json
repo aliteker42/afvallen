@@ -1,0 +1,25 @@
+{
+  "name": "afvallen",
+  "version": "1.0.0",
+  "description": "Kişisel kilo takip uygulaması. Tek amacı var: **can sıkıntısından yemeyi durdurmak** ve kiloyu tekrar aşağı çekmek.",
+  "main": "sw.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aliteker42/afvallen.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aliteker42/afvallen/issues"
+  },
+  "homepage": "https://github.com/aliteker42/afvallen#readme",
+  "devDependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
+  }
+}
