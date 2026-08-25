@@ -125,6 +125,7 @@ function renderToday() {
   $('#prog-start').textContent = p.startWeight.toFixed(1);
   $('#prog-now').textContent = kg.toFixed(1) + ' kg';
   $('#prog-goal').textContent = p.goalWeight.toFixed(1);
+  $('#goal-weight').textContent = p.goalWeight.toFixed(1) + ' kg';
   $('#prog-fill').style.width = pct.toFixed(1) + '%';
   $('#prog-marker').style.left = `calc(${Math.min(100, pct).toFixed(1)}% - 1.5px)`;
   const kalan = Math.max(0, kg - p.goalWeight);
@@ -133,6 +134,9 @@ function renderToday() {
     ? 'Hedefe ulaştın. Yeni hedef belirle.'
     : `Hedefe ${kalan.toFixed(1)} kg · ${done.toFixed(1)} kg verildi` +
       (weekly > 0 ? ` · bu hızla ≈ ${Math.ceil(kalan / weekly)} hafta` : '');
+  $('#goal-info').textContent = kalan <= 0
+    ? 'Hedefe ulaştın! 🎉'
+    : `${kalan.toFixed(1)} kg kaldı` + (weekly > 0 ? ` · ~${Math.ceil(kalan / weekly)} hafta` : '');
 
   // kalori / protein
   const tot = Store.dayTotals();
