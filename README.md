@@ -15,7 +15,7 @@ Kişisel kilo takip uygulaması. Tek amacı var: **can sıkıntısından yemeyi 
 | **Yemek** | Fotoğrafla veya elle öğün ekleme, hazır Türk yemekleri listesi, günlük toplam |
 | **Sıkıntı** | `CANIM SIKILIYOR` butonu, 90 saniyelik görev, "gerçekten aç mıyım" testi, atlatma sayacı |
 | **Sağlık** | Tansiyon, uyku ve nefeste kilo düştükçe ne kazanıldığını gösteren yol haritaları |
-| **Ayarlar** | Profil, hedefler, koç tonu, API anahtarı, yedekleme (⚙ simgesinden açılır) |
+| **Ayarlar** | Profil, hedefler, koç tonu, bildirimler, API anahtarı, yedekleme (⚙ simgesinden açılır) |
 
 ### Can sıkıntısı butonu
 Yemeden önce basılır. 90 saniyelik geri sayım başlar ve rastgele bir görev verir (su iç, 20 şınav, yürü, duş al, dişini fırçala…). Sonunda "Yaptım, geçti" veya "Yine de yedim" işaretlenir. Atlatılan her kriz sayılır ve kaç kalori kurtardığın gösterilir.
@@ -34,10 +34,32 @@ Bugün ekranında da en yakın kazanım kartı durur, böylece "3.5 kg sonra ne 
 
 Eşikler yayımlanmış ortalamalara dayanır: 1 kg ≈ 1 mmHg sistolik, %5 kayıp ≈ karaciğer yağının gerilemeye başladığı nokta, %7 ≈ tip 2 diyabet riskinde ciddi düşüş, %10 ≈ uyku apnesi şiddetinde ortalama dörtte bir azalma, 1 kg ≈ her adımda 4 kg diz yükü.
 
+### Bildirimler
+Dört zaman dilimi, her biri ayrı açılıp kapanır ve saati değiştirilebilir:
+
+| Slot | Varsayılan | Ne der |
+|---|---|---|
+| Sabah tartısı | 08:00 | *"Tuvaletten sonra, aç karnına. 10 saniye sürer."* |
+| Gün ortası | 13:00 | *"Protein aldın mı? Öğlene kadar 60 g hedefle."* |
+| **Tehlike saati** | 21:00 | *"Aç değilsin, sıkılıyorsun. Butona bas, 90 saniye ver."* |
+| Rastgele motivasyon | 17:00 | *"133'ten 104'e indin. Yapabilir misin sorusu çoktan cevaplandı."* |
+
+Bildirime dokununca doğrudan ilgili ekran açılır — tehlike saati bildirimi sıkıntı ekranını, sabah bildirimi tartıyı açar.
+
+Sunucu yok, push servisi yok; her şey cihazda üretilir. Ana ekrana kurulu Chrome'da arka planda da çalışır (`periodicSync`); diğer durumlarda uygulama açık ya da yakın zamanda kullanılmışken gelir. Ayarlar sayfası hangi modda olduğunu yazar.
+
 ### Fotoğrafla kalori
 Yemeğin fotoğrafını çek → Claude görüntüyü analiz eder → porsiyon tahmini, kalori, protein ve **somut sonuç cümlesi** döner. Sonra üç seçenek: `Yedim, ekle` · `Yarısını yedim` · `Yemedim 💪`.
 
 Anahtar yoksa fotoğraf yine kaydedilir, kaloriyi elle yazarsın.
+
+**API mümkün olduğunca az kullanılır:**
+- Elle yazdığın yemekler **87 kalemlik yerel veritabanından** bulunur — yazmaya başladığın anda kalori ve protein kendiliğinden dolar, API'ye hiç gidilmez.
+- Varsayılan model **Haiku** (Ayarlar'dan Sonnet'e alınabilir).
+- Fotoğraf 600 px'e küçültülür: jeton maliyeti ≈ (en × boy) / 750 olduğu için bu, 900 px'e göre maliyeti yarıya indirir; porsiyon tahmininde kayda değer fark yaratmaz.
+- İstem kısa tutulur, cevap 300 jetonla sınırlıdır.
+
+Sonuç: fotoğraf başına yaklaşık **0.1 cent**. Günde 3 fotoğraf ≈ ayda 10 cent. Ayarlar sayfası o ayki çağrı sayısını, jetonu ve tahmini tutarı gösterir.
 
 ### Koç tonu
 Ayarlardan üç mod: **Sert** (suçluluk üzerinden), **Soğuk** (yalnız rakamlar), **Koç** (uyarır, alternatif sunar). Kötü günde tonu yumuşat, iyi günde sertleştir.
@@ -46,10 +68,16 @@ Ayarlardan üç mod: **Sert** (suçluluk üzerinden), **Soğuk** (yalnız rakaml
 
 ## Kurulum
 
+### Yayına almak
+
+**Seçenek A — GitHub Pages (otomatik).** Depoda hazır bir Actions iş akışı var (`.github/workflows/deploy.yml`): her push'ta dosyaları kontrol eder ve Pages'e yayınlar. Tek yapman gereken depo ayarlarından **Settings → Pages → Source: GitHub Actions** seçmek. Sonrasında her commit kendiliğinden canlıya çıkar.
+
+**Seçenek B — kendi hostingin.** Build adımı yok: klasörün içeriğini olduğu gibi FTP'yle at, bitti. Tek şart **HTTPS** — service worker, bildirimler ve "ana ekrana ekle" yalnızca HTTPS'te çalışır.
+
 ### Telefona kurmak
-1. Dosyaları herhangi bir HTTPS sunucusuna at (kendi hostingin yeterli — build adımı yok, olduğu gibi yükle).
-2. Telefondan adresi aç.
-3. **Android/Chrome:** menü → "Uygulamayı yükle". **iPhone/Safari:** paylaş → "Ana Ekrana Ekle".
+1. Telefondan adresi aç.
+2. **Android/Chrome:** menü → "Uygulamayı yükle". **iPhone/Safari:** paylaş → "Ana Ekrana Ekle".
+3. Ayarlar → Bildirimler → aç, izni ver.
 
 Simge ana ekrana gelir, tam ekran açılır, internet olmadan da çalışır.
 
@@ -96,11 +124,14 @@ js/data.js                sıkıntı görevleri, sorular, yemek listesi, koç c�
 js/store.js               localStorage katmanı
 js/calc.js                BMI, TDEE, trend, tahmin, kilometre taşları
 js/health.js              kilo kaybının tansiyon/uyku/nefeste açtığı kazanımlar
+js/notify.js              bildirim izni ve zamanlama
+js/notify-messages.js     bildirim metinleri (sayfa ve service worker ortak kullanır)
 js/chart.js               bağımlılıksız SVG grafik
 js/coach.js               tona göre cümle üretimi
 js/photo.js               fotoğraf küçültme + Claude API analizi
 js/app.js                 ekran çizimi ve etkileşimler
-sw.js                     çevrimdışı önbellek
+sw.js                     çevrimdışı önbellek + arka plan bildirimleri
+.github/workflows/        GitHub Pages otomatik yayını
 manifest.webmanifest      PWA tanımı
 ```
 

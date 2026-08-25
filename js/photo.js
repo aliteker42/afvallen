@@ -1,12 +1,18 @@
 /* Fotoğrafla yemek analizi — Claude API (opsiyonel) */
 
 const Photo = {
-  MODEL: 'claude-sonnet-5',
+  /* Jeton maliyeti ≈ (en × boy) / 750. 600 px kare ≈ 480 jeton;
+     900 px'te bu iki katına çıkardı, isabet farkı ise ihmal edilebilir. */
+  MAX_SIDE: 600,
 
-  /* Fotoğrafı küçült: hem depolama hem yükleme hızı için */
+  model() {
+    return Store.data.apiModel || 'claude-haiku-4-5-20251001';
+  },
+
+  /* Fotoğrafı küçült: hem depolama hem jeton maliyeti için */
   async shrink(file, maxSide, quality) {
-    maxSide = maxSide || 900;
-    quality = quality || 0.75;
+    maxSide = maxSide || this.MAX_SIDE;
+    quality = quality || 0.7;
     const dataUrl = await new Promise((res, rej) => {
       const r = new FileReader();
       r.onload = () => res(r.result);
@@ -48,12 +54,9 @@ const Photo = {
     const kg = Store.currentKg();
     const t = Store.data.targets;
     const eaten = Store.dayTotals().kcal;
-    return `Bu fotoğraftaki yemeği analiz et. Kullanıcı ${p.age} yaşında, ${p.heightCm} cm, ${kg} kg, günlük kalori hedefi ${t.kcal} kcal ve bugün şu ana kadar ${eaten} kcal almış.
-
-Porsiyon büyüklüğünü fotoğraftaki tabak/kap oranından tahmin et. Türk mutfağı ağırlıklı düşün.
-
-SADECE şu JSON'u döndür, başka hiçbir şey yazma:
-{"name":"kısa yemek adı","items":["bileşen (tahmini gram)"],"kcal":sayı,"protein":sayı,"confidence":"dusuk|orta|yuksek","note":"tek cümlelik porsiyon/tahmin notu"}`;
+    return `Türk mutfağı. Porsiyonu tabak oranından tahmin et. Bugün ${eaten}/${t.kcal} kcal alındı.
+Sadece JSON döndür:
+{"name":"yemek adı","items":["bileşen (g)"],"kcal":0,"protein":0,"confidence":"dusuk|orta|yuksek","note":"tek cümle"}`;
   },
 
   async analyze(dataUrl) {
@@ -69,8 +72,8 @@ SADECE şu JSON'u döndür, başka hiçbir şey yazma:
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: this.MODEL,
-        max_tokens: 500,
+        model: this.model(),
+        max_tokens: 300,
         messages: [{
           role: 'user',
           content: [
@@ -90,6 +93,7 @@ SADECE şu JSON'u döndür, başka hiçbir şey yazma:
     }
 
     const json = await res.json();
+    if (json.usage) Store.trackApi(json.usage.input_tokens, json.usage.output_tokens);
     const text = (json.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
     return this.parse(text);
   },

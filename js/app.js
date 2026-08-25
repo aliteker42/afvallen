@@ -18,8 +18,19 @@ function init() {
   bindPanic();
   bindHunger();
   bindSettings();
+  bindNotify();
   renderAll();
   registerSW();
+  openFromHash();
+}
+
+/* Bildirime tıklanınca ilgili ekranı aç.
+   Uygulama zaten açıksa DOMContentLoaded tekrar çalışmaz, o yüzden hashchange de dinlenir. */
+window.addEventListener('hashchange', () => openFromHash());
+
+function openFromHash() {
+  const h = (location.hash || '').replace('#', '');
+  if (['bugun', 'tarti', 'yemek', 'sikinti', 'saglik', 'ayarlar'].includes(h)) go(h);
 }
 
 function seedIfEmpty() {
@@ -280,7 +291,7 @@ function bindMeals() {
     const protein = parseInt($('#meal-protein').value, 10) || 0;
     if (!kcal) { toast('Kalori gir', 'bad'); return; }
     Store.addMeal({ name, kcal, protein });
-    $('#meal-name').value = ''; $('#meal-kcal').value = ''; $('#meal-protein').value = '';
+    clearMealForm();
     renderMeals(); renderToday();
     toast(`${kcal} kcal eklendi`);
   });
@@ -297,6 +308,28 @@ function bindMeals() {
   });
 
   $('#photo-input').addEventListener('change', onPhoto);
+
+  // yerel veritabanı — API'ye gitmeden kalori doldurur
+  $('#food-list').innerHTML = FOOD_DB.map(f => `<option value="${escapeHtml(f.n)}">`).join('');
+  $('#meal-name').addEventListener('input', () => {
+    const hit = findFood($('#meal-name').value);
+    const kEl = $('#meal-kcal'), pEl = $('#meal-protein');
+    if (hit && !kEl.dataset.touched) {
+      kEl.value = hit.k;
+      pEl.value = hit.p;
+      kEl.classList.add('auto'); pEl.classList.add('auto');
+    }
+  });
+  [$('#meal-kcal'), $('#meal-protein')].forEach(el => {
+    el.addEventListener('input', () => { el.dataset.touched = '1'; el.classList.remove('auto'); });
+  });
+}
+
+function clearMealForm() {
+  ['#meal-name', '#meal-kcal', '#meal-protein'].forEach(sel => {
+    const el = $(sel);
+    el.value = ''; delete el.dataset.touched; el.classList.remove('auto');
+  });
 }
 
 function renderMeals() {
@@ -573,6 +606,79 @@ function answerHunger(v) {
   $('#q-no').onclick = () => { $('#overlay-hunger').classList.add('hidden'); bindHunger(); };
 }
 
+/* ---------------- bildirimler ---------------- */
+function bindNotify() {
+  $('#ntf-slots').innerHTML = Notify.SLOTS.map(sl => `
+    <div class="ntf-row">
+      <button class="ntf-chk" data-slot="${sl.id}" role="switch"><span></span></button>
+      <div class="ntf-label">${escapeHtml(sl.label)}</div>
+      <input type="time" class="ntf-time" data-time="${sl.id}" value="${sl.def}">
+    </div>`).join('');
+
+  $('#ntf-toggle').addEventListener('click', async () => {
+    const cfg = Store.data.notify;
+    if (!cfg.enabled) {
+      const p = await Notify.request();
+      if (p !== 'granted') {
+        toast(p === 'denied' ? 'Bildirim izni reddedilmiş — tarayıcı ayarlarından aç' : 'Bildirim desteklenmiyor', 'bad');
+        renderNotify();
+        return;
+      }
+      cfg.enabled = true;
+    } else {
+      cfg.enabled = false;
+    }
+    Store.save();
+    Notify.schedule();
+    renderNotify();
+  });
+
+  $('#ntf-slots').addEventListener('click', e => {
+    const b = e.target.closest('[data-slot]');
+    if (!b) return;
+    const id = b.dataset.slot;
+    Store.data.notify.slots[id] = !Store.data.notify.slots[id];
+    Store.save(); Notify.schedule(); renderNotify();
+  });
+
+  $('#ntf-slots').addEventListener('change', e => {
+    const t = e.target.closest('[data-time]');
+    if (!t) return;
+    Store.data.notify.times[t.dataset.time] = t.value;
+    Store.save(); Notify.schedule(); renderNotify();
+  });
+
+  $('#ntf-test').addEventListener('click', async () => {
+    const ok = await Notify.test();
+    toast(ok ? 'Gönderildi' : 'İzin verilmedi', ok ? 'win' : 'bad');
+  });
+
+  if (Store.data.notify.enabled) Notify.schedule();
+  renderNotify();
+}
+
+async function renderNotify() {
+  const cfg = Store.data.notify;
+  const on = cfg.enabled && Notify.permission() === 'granted';
+  $('#ntf-toggle').classList.toggle('on', on);
+  $('#ntf-toggle').setAttribute('aria-checked', String(on));
+  $('#ntf-slots').classList.toggle('disabled', !on);
+
+  $$('[data-slot]').forEach(b => b.classList.toggle('on', !!cfg.slots[b.dataset.slot]));
+  $$('[data-time]').forEach(t => { t.value = cfg.times[t.dataset.time] || t.value; });
+
+  if (!Notify.supported()) {
+    $('#ntf-hint').textContent = 'Bu tarayıcı bildirimleri desteklemiyor.';
+    return;
+  }
+  const bg = await Notify.backgroundActive();
+  $('#ntf-hint').textContent = !on
+    ? 'Kapalı. Açarsan seçtiğin saatlerde hatırlatma gelir — özellikle akşam tehlike saatinde.'
+    : bg
+      ? 'Açık ve arka planda çalışıyor. Uygulama kapalıyken de bildirim gelir.'
+      : 'Açık. Arka plan izni yok, yani bildirimler uygulama açık ya da yakın zamanda kullanılmışken gelir. Ana ekrana kurmak bunu iyileştirir.';
+}
+
 /* ---------------- ayarlar ---------------- */
 function bindSettings() {
   const map = {
@@ -601,6 +707,12 @@ function bindSettings() {
       ? 'Anahtar kayıtlı. Fotoğraf çek, kaloriyi tahmin edeyim.'
       : 'Analiz için Ayarlar\'dan Claude API anahtarını gir.';
     toast(Photo.hasKey() ? 'Anahtar kaydedildi' : 'Anahtar silindi');
+  });
+
+  $('#set-model').addEventListener('change', () => {
+    Store.data.apiModel = $('#set-model').value;
+    Store.save(); fillSettings();
+    toast('Model değişti');
   });
 
   $('#btn-recalc').addEventListener('click', () => {
@@ -652,6 +764,13 @@ function fillSettings() {
   $('#tdee-hint').textContent =
     `Bazal yakım ${Calc.bmr(kg, p.heightCm, p.age, p.sex)} kcal · günlük toplam yakım ≈ ${tdee} kcal. ` +
     `${t.kcal} kcal ile günlük açık ${tdee - t.kcal} kcal ≈ haftada ${weekly.toFixed(2)} kg.`;
+
+  $('#set-model').value = Store.data.apiModel;
+  const u = Store.data.apiUsage;
+  const cost = Store.apiCost();
+  $('#usage-box').innerHTML = u.calls
+    ? `Bu ay <b>${u.calls}</b> fotoğraf analizi · ${(u.inTok + u.outTok).toLocaleString('tr-TR')} jeton · yaklaşık <b>$${cost.toFixed(3)}</b>`
+    : 'Bu ay henüz API kullanılmadı. Elle yazdığın yemekler ücretsiz.';
 
   const bytes = new Blob([Store.exportJSON()]).size;
   $('#backup-hint').textContent =
@@ -714,9 +833,14 @@ function vibrate(pattern) {
 }
 
 function registerSW() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  }
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.type === 'open') {
+      go(e.data.slot === 'tehlike' ? 'sikinti' : e.data.slot === 'sabah' ? 'tarti' : 'bugun');
+      if (e.data.slot === 'tehlike') openPanic();
+    }
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

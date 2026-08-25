@@ -18,6 +18,14 @@ const DEFAULTS = {
   meals: [],     // {id, d, ts, name, kcal, protein, photo}
   boredom: [],   // {id, ts, task, outcome:'resisted'|'ate'}
   apiKey: '',
+  apiModel: 'claude-haiku-4-5-20251001',
+  apiUsage: { month: '', calls: 0, inTok: 0, outTok: 0 },
+  notify: {
+    enabled: false,
+    slots: { sabah: true, ogle: false, tehlike: true, motivasyon: true },
+    times: { sabah: '08:00', ogle: '13:00', tehlike: '21:00', motivasyon: '17:00' },
+    sent: []
+  },
   createdAt: null
 };
 
@@ -95,6 +103,25 @@ const Store = {
   },
   resistCount() {
     return this.data.boredom.filter(b => b.outcome === 'resisted').length;
+  },
+
+  /* --- API kullanımı --- */
+  trackApi(inTok, outTok) {
+    const m = today().slice(0, 7);
+    const u = this.data.apiUsage;
+    if (u.month !== m) { u.month = m; u.calls = 0; u.inTok = 0; u.outTok = 0; }
+    u.calls++;
+    u.inTok += inTok || 0;
+    u.outTok += outTok || 0;
+    this.save();
+  },
+  /* Haiku fiyatlaması üzerinden kaba aylık maliyet (USD) */
+  apiCost() {
+    const u = this.data.apiUsage;
+    const haiku = this.data.apiModel.includes('haiku');
+    const inRate = haiku ? 1 : 3;      // $ / milyon giriş jetonu
+    const outRate = haiku ? 5 : 15;    // $ / milyon çıkış jetonu
+    return (u.inTok / 1e6) * inRate + (u.outTok / 1e6) * outRate;
   },
 
   /* --- yedek --- */

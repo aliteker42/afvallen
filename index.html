@@ -188,7 +188,8 @@
     <div class="card">
       <div class="label">Elle ekle</div>
       <div class="meal-form">
-        <input type="text" id="meal-name" placeholder="Ne yedin?">
+        <input type="text" id="meal-name" placeholder="Ne yedin?" list="food-list" autocomplete="off">
+        <datalist id="food-list"></datalist>
         <div class="meal-row">
           <input type="number" id="meal-kcal" inputmode="numeric" placeholder="kcal">
           <input type="number" id="meal-protein" inputmode="numeric" placeholder="protein g">
@@ -298,9 +299,27 @@
     </div>
 
     <div class="card">
+      <div class="label">Bildirimler</div>
+      <div class="form-row">
+        <label>Hatırlatmalar</label>
+        <button class="toggle" id="ntf-toggle" role="switch" aria-checked="false"><span></span></button>
+      </div>
+      <div id="ntf-slots" class="ntf-slots"></div>
+      <button class="secondary-btn" id="ntf-test">Deneme bildirimi gönder</button>
+      <div class="hint" id="ntf-hint">—</div>
+    </div>
+
+    <div class="card">
       <div class="label">Fotoğraf analizi</div>
       <div class="form-row"><label>Claude API anahtarı</label><input type="password" id="set-apikey" placeholder="sk-ant-..."></div>
-      <div class="hint">Anahtar sadece bu telefonda saklanır, hiçbir yere gönderilmez (fotoğraf analizi hariç, o da doğrudan Anthropic'e gider).</div>
+      <div class="form-row"><label>Model</label>
+        <select id="set-model">
+          <option value="claude-haiku-4-5-20251001">Ucuz (Haiku)</option>
+          <option value="claude-sonnet-5">İsabetli (Sonnet)</option>
+        </select>
+      </div>
+      <div class="usage-box" id="usage-box">—</div>
+      <div class="hint">Anahtar sadece bu telefonda saklanır. Fotoğraf doğrudan Anthropic'e gider, arada başka sunucu yok. Elle yazdığın yemekler yerel listeden bulunur, API'ye hiç gitmez.</div>
     </div>
 
     <div class="card">
@@ -375,6 +394,8 @@
 <script src="js/health.js"></script>
 <script src="js/coach.js"></script>
 <script src="js/photo.js"></script>
+<script src="js/notify-messages.js"></script>
+<script src="js/notify.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

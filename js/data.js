@@ -52,6 +52,93 @@ const QUICK_FOODS = [
   { n: "Kuruyemiş (50g)", k: 300, p: 9 }
 ];
 
+/* Yerel yemek veritabanı — elle girişte API'ye hiç gitmeden eşleşir.
+   Değerler ortalama porsiyon içindir. */
+const FOOD_DB = QUICK_FOODS.concat([
+  { n: "Menemen (2 yumurta)", k: 280, p: 15 },
+  { n: "Omlet (2 yumurta)", k: 220, p: 14 },
+  { n: "Sucuklu yumurta", k: 420, p: 22 },
+  { n: "Simit", k: 280, p: 8 },
+  { n: "Poğaça", k: 320, p: 6 },
+  { n: "Börek (1 dilim)", k: 350, p: 9 },
+  { n: "Kaşarlı tost", k: 400, p: 18 },
+  { n: "Zeytin (10 adet)", k: 60, p: 0 },
+  { n: "Kaşar peyniri (30g)", k: 110, p: 8 },
+  { n: "Bal (1 yemek kaşığı)", k: 64, p: 0 },
+  { n: "Reçel (1 yemek kaşığı)", k: 55, p: 0 },
+  { n: "Tereyağı (1 yemek kaşığı)", k: 100, p: 0 },
+  { n: "Zeytinyağı (1 yemek kaşığı)", k: 120, p: 0 },
+  { n: "Süt (1 bardak)", k: 125, p: 8 },
+  { n: "Ayran (1 bardak)", k: 60, p: 3 },
+  { n: "Çay (şekersiz)", k: 2, p: 0 },
+  { n: "Türk kahvesi (sade)", k: 5, p: 0 },
+  { n: "Latte (orta)", k: 190, p: 10 },
+  { n: "Meyve suyu (1 bardak)", k: 110, p: 0 },
+  { n: "Şeker (1 küp)", k: 20, p: 0 },
+  { n: "Mercimek yemeği", k: 250, p: 14 },
+  { n: "Kuru fasulye", k: 340, p: 16 },
+  { n: "Nohut yemeği", k: 300, p: 14 },
+  { n: "Bulgur pilavı", k: 250, p: 7 },
+  { n: "Makarna (1 porsiyon)", k: 350, p: 12 },
+  { n: "Mantı (1 porsiyon)", k: 550, p: 22 },
+  { n: "İçli köfte (1)", k: 220, p: 8 },
+  { n: "Sarma (5 adet)", k: 200, p: 4 },
+  { n: "Karnıyarık", k: 380, p: 16 },
+  { n: "Musakka", k: 350, p: 15 },
+  { n: "Türlü", k: 220, p: 7 },
+  { n: "Izgara köfte (4 adet)", k: 400, p: 30 },
+  { n: "Tavuk şiş", k: 350, p: 40 },
+  { n: "Adana kebap", k: 650, p: 35 },
+  { n: "İskender", k: 900, p: 40 },
+  { n: "Tavuk döner porsiyon", k: 550, p: 35 },
+  { n: "Balık ızgara (150g)", k: 250, p: 32 },
+  { n: "Hamsi tava (150g)", k: 400, p: 25 },
+  { n: "Çiğ köfte (dürüm)", k: 350, p: 8 },
+  { n: "Kumpir", k: 700, p: 15 },
+  { n: "Tost (kaşarlı, ekstra)", k: 550, p: 22 },
+  { n: "Patates kızartması (orta)", k: 380, p: 4 },
+  { n: "Pilav üstü tavuk", k: 600, p: 38 },
+  { n: "Çorba (ezogelin)", k: 200, p: 8 },
+  { n: "Yayla çorbası", k: 180, p: 7 },
+  { n: "Salata (yoğurtlu)", k: 120, p: 5 },
+  { n: "Cacık", k: 90, p: 5 },
+  { n: "Humus (100g)", k: 180, p: 6 },
+  { n: "Elma (1 adet)", k: 95, p: 0 },
+  { n: "Muz (1 adet)", k: 105, p: 1 },
+  { n: "Portakal (1 adet)", k: 62, p: 1 },
+  { n: "Üzüm (1 kase)", k: 100, p: 1 },
+  { n: "Karpuz (1 dilim)", k: 85, p: 2 },
+  { n: "Kuru üzüm (30g)", k: 90, p: 1 },
+  { n: "Ceviz (5 adet)", k: 130, p: 3 },
+  { n: "Badem (20 adet)", k: 140, p: 5 },
+  { n: "Dondurma (2 top)", k: 250, p: 4 },
+  { n: "Sütlaç", k: 250, p: 6 },
+  { n: "Künefe", k: 500, p: 12 },
+  { n: "Kek (1 dilim)", k: 300, p: 4 },
+  { n: "Bisküvi (5 adet)", k: 220, p: 3 },
+  { n: "Kraker (1 paket)", k: 180, p: 4 },
+  { n: "Protein tozu (1 ölçek)", k: 120, p: 24 },
+  { n: "Rakı (1 duble)", k: 200, p: 0 },
+  { n: "Şarap (1 kadeh)", k: 125, p: 0 }
+]);
+
+/* İsimden yerel eşleşme — API'ye gitmeden kalori bulur */
+function findFood(query) {
+  const q = (query || '').toLocaleLowerCase('tr').trim();
+  if (q.length < 2) return null;
+  let best = null, bestScore = 0;
+  for (const f of FOOD_DB) {
+    const n = f.n.toLocaleLowerCase('tr');
+    let score = 0;
+    if (n === q) score = 100;
+    else if (n.startsWith(q)) score = 80;
+    else if (n.includes(q)) score = 60;
+    else if (q.includes(n.split(' ')[0]) && n.split(' ')[0].length > 3) score = 40;
+    if (score > bestScore) { bestScore = score; best = f; }
+  }
+  return bestScore >= 40 ? best : null;
+}
+
 /* Koç cümleleri — {kg}, {kalan}, {rekor}, {gun} yer tutucuları doldurulur */
 const COACH = {
   sert: {
