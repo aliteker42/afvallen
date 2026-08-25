@@ -13,24 +13,24 @@ Kişisel kilo takip uygulaması. Tek amacı var: **can sıkıntısından yemeyi 
 | **Bugün** | Güncel kilo, BMI, hedefe kalan, günün kalorisi/proteini, sıradaki kilometre taşı, koç cümlesi |
 | **Tartı** | Kilo girişi, trend grafiği (7 günlük ortalama — günlük su dalgalanmasını süzer), 7/30 gün değişimi, kilometre taşları, geçmiş |
 | **Yemek** | Fotoğrafla veya elle öğün ekleme, hazır Türk yemekleri listesi, günlük toplam |
-| **Sıkıntı** | `CANIM SIKILIYOR` butonu, 90 saniyelik görev, haftanın canavarı, rozetler, "gerçekten aç mıyım" testi |
+| **Sıkıntı** | `CANIM SIKILIYOR` butonu, 90 saniyelik görev, haftanın duvarı, rozetler, "gerçekten aç mıyım" testi |
 | **Sağlık** | Tansiyon, uyku ve nefeste kilo düştükçe ne kazanıldığını gösteren yol haritaları |
 | **Ayarlar** | Profil, hedefler, koç tonu, bildirimler, fotoğraf analizi yöntemi, yedekleme (⚙ simgesinden açılır) |
 
 ### Oyun katmanı
 Ayrı bir şey girmen gerekmez — hepsi zaten tuttuğun kayıtlardan beslenir.
 
-**Seviye ve XP.** Tartılmak +10, öğün kaydı +5, sıkıntıyı atlatmak +25, fotoğraftaki yemeği yememek +40, günü kalori hedefinin altında kapatmak +50, kilometre taşı +100. Sekiz seviye: 🥚 Çaylak → 🐣 Kararlı → 🔥 Direnişçi → 🏹 Sıkıntı Avcısı → ⚔️ Disiplinli → 🛡️ Demir İrade → 👑 Rekor Kırıcı → 🐉 Efsane.
+**Seviye ve XP.** Tartılmak +10, öğün kaydı +5, sıkıntıyı atlatmak +25, fotoğraftaki yemeği yememek +40, günü kalori hedefinin altında kapatmak +50, kilometre taşı +100. Sekiz seviye: 🥚 Çaylak → 🐣 Kararlı → 🔥 Direnişçi → 🏹 Sıkıntı Avcısı → ⚔️ Disiplinli → 🛡️ Demir İrade → 👑 Rekor Kırıcı → 🦁 Efsane.
 
 **Günün görevleri.** Her gün havuzdan 3 tane seçilir (tarihten türetilir, gün içinde değişmez). Otomatik olanlar kendiliğinden işaretlenir ve tıklayınca seni yapılacağı ekrana götürür — bedavaya kapatamazsın. Elle olanlar ("2 litre su iç", "asansör yerine merdiven") dokunarak işaretlenir.
 
 **Tartı serisi.** 14 günlük takvim ızgarası ve 🔥 sayacı. Zinciri kırma.
 
-**Haftanın canavarı.** 500 canlı puanlı bir *Can Sıkıntısı Canavarı* 👹. Her atlattığın kriz 70, fotoğraftaki yemeği reddetmek 60, temiz gün 50, tartılmak 15 hasar verir. Teslim olursan 40 iyileşir. Devirince +150 XP, konfeti ve rozet. Her hafta yenisi gelir.
+**Haftanın duvarı.** 500 puanlık bir *Can Sıkıntısı Duvarı* 🧱. Her atlattığın kriz 70, fotoğraftaki yemeği reddetmek 60, temiz gün 50, tartılmak 15 götürür. Teslim olursan 40 geri örülür. Yıkınca +150 XP, konfeti ve rozet. Duvar çatlayınca 🪨, yıkılınca 🏁 olur. Her hafta yenisi gelir.
 
-**18 rozet.** İlk Adım, Hayır Dedim, Gece Bekçisi (22:00 sonrası atlatma), Sabah Kuşu, Yarısı Yeter, Protein Canavarı, Temiz Hafta, Rekor Avcısı, Canavar Avcısı, Seri Katil… Kilitliyken `🔒 ???` görünür.
+**18 rozet.** İlk Adım, Hayır Dedim, Gece Bekçisi (22:00 sonrası atlatma), Sabah Kuşu, Yarısı Yeter, Protein Ustası, Temiz Hafta, Rekor Avcısı, Duvar Yıkıcı, Beş Duvar… Kilitliyken `🔒 ???` görünür.
 
-Seviye atlama, rozet ve canavar ölümünde konfeti + titreşim + ödül kartı gelir. `prefers-reduced-motion` açıksa animasyonlar kapanır.
+Seviye atlama, rozet ve duvar yıkımında konfeti + titreşim + ödül kartı gelir. `prefers-reduced-motion` açıksa animasyonlar kapanır.
 
 ### Can sıkıntısı butonu
 Yemeden önce basılır. 90 saniyelik geri sayım başlar ve rastgele bir görev verir (su iç, 20 şınav, yürü, duş al, dişini fırçala…). Sonunda "Yaptım, geçti" veya "Yine de yedim" işaretlenir. Atlatılan her kriz sayılır ve kaç kalori kurtardığın gösterilir.
@@ -80,7 +80,7 @@ Android'de daha kısası var: uygulama bir **paylaşım hedefi** olarak kayıtl�
 Hangi yöntem olursa olsun sonuç aynı ekranda çıkar ve üç seçenek sunar: `Yedim, ekle` · `Yarısını yedim` · `Yemedim 💪` (sonuncusu sıkıntı sayacına yazılır).
 
 **API kullanımı zaten en aza indirilmiş durumda:**
-- Elle yazdığın yemekler **87 kalemlik yerel veritabanından** bulunur — yazmaya başladığın anda kalori ve protein kendiliğinden dolar, hiçbir yere istek gitmez.
+- Elle yazdığın yemekler **84 kalemlik yerel veritabanından** bulunur — yazmaya başladığın anda kalori ve protein kendiliğinden dolar, hiçbir yere istek gitmez.
 - Varsayılan model **Haiku 4.5** ($1/$5 per MTok); Sonnet 5 ($2/$10) seçilebilir.
 - Fotoğraf 600 px'e küçültülür: jeton maliyeti ≈ (en × boy) / 750 olduğu için bu, 900 px'e göre maliyeti yarıya indirir.
 - İstem kısa, cevap 300 jetonla sınırlı.
@@ -158,7 +158,7 @@ js/data.js                sıkıntı görevleri, sorular, yemek listesi, koç c�
 js/store.js               localStorage katmanı
 js/calc.js                BMI, TDEE, trend, tahmin, kilometre taşları
 js/health.js              kilo kaybının tansiyon/uyku/nefeste açtığı kazanımlar
-js/game.js                XP, seviye, rozet, günlük görev, haftalık canavar
+js/game.js                XP, seviye, rozet, günlük görev, haftalık duvar
 js/notify.js              bildirim izni ve zamanlama
 js/notify-messages.js     bildirim metinleri (sayfa ve service worker ortak kullanır)
 js/chart.js               bağımlılıksız SVG grafik

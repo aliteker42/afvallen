@@ -1,7 +1,7 @@
 /* Çevrimdışı önbellek + arka plan bildirimleri */
 importScripts('./js/notify-messages.js');
 
-const CACHE = 'yeniden104-v6';
+const CACHE = 'yeniden104-v7';
 const ASSETS = [
   './',
   './index.html',

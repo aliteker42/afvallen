@@ -1,4 +1,4 @@
-/* Oyun katmanı: XP, seviye, rozet, günlük görev, haftalık canavar.
+/* Oyun katmanı: XP, seviye, rozet, günlük görev, haftalık duvar.
    Hepsi mevcut kayıtlardan beslenir — ayrı bir şey girmen gerekmez. */
 
 const LEVELS = [
@@ -9,7 +9,7 @@ const LEVELS = [
   { xp: 1400, t: 'Disiplinli',      i: '⚔️' },
   { xp: 2200, t: 'Demir İrade',     i: '🛡️' },
   { xp: 3200, t: 'Rekor Kırıcı',    i: '👑' },
-  { xp: 4500, t: 'Efsane',          i: '🐉' }
+  { xp: 4500, t: 'Efsane',          i: '🦁' }
 ];
 
 const XP = {
@@ -26,7 +26,7 @@ const BADGES = [
   { id: 'direnis50',   i: '🥋', t: 'Sıkıntı Ustası',   d: '50 kez atlattın.' },
   { id: 'gece',        i: '🌙', t: 'Gece Bekçisi',     d: 'Gece 22:00\'den sonra atlattın.' },
   { id: 'sabah',       i: '🌅', t: 'Sabah Kuşu',       d: 'Sabah 9\'dan önce tartıldın.' },
-  { id: 'protein',     i: '🥩', t: 'Protein Canavarı', d: 'Günlük protein hedefini tutturdun.' },
+  { id: 'protein',     i: '🥩', t: 'Protein Ustası',   d: 'Günlük protein hedefini tutturdun.' },
   { id: 'temiz_gun',   i: '✅', t: 'Temiz Gün',        d: 'Bir günü kalori hedefinin altında kapattın.' },
   { id: 'temiz5',      i: '🏆', t: 'Temiz Hafta',      d: '5 temiz gün topladın.' },
   { id: 'yarim',       i: '🍽️', t: 'Yarısı Yeter',     d: 'Bir öğünün yarısında durdun.' },
@@ -34,8 +34,8 @@ const BADGES = [
   { id: 'eksi5',       i: '5️⃣', t: '-5 kg',            d: 'Başlangıçtan 5 kg aşağıdasın.' },
   { id: 'eksi10',      i: '🔟', t: '-10 kg',           d: 'Başlangıçtan 10 kg aşağıdasın.' },
   { id: 'rekor',       i: '🐐', t: 'Rekor Avcısı',     d: 'Eski rekorunu kırdın.' },
-  { id: 'boss',        i: '💀', t: 'Canavar Avcısı',   d: 'Can sıkıntısı canavarını devirdin.' },
-  { id: 'boss5',       i: '☠️', t: 'Seri Katil',       d: '5 canavar devirdin.' }
+  { id: 'boss',        i: '🧱', t: 'Duvar Yıkıcı',    d: 'Can sıkıntısı duvarını yıktın.' },
+  { id: 'boss5',       i: '🏗️', t: 'Beş Duvar',        d: '5 duvar yıktın.' }
 ];
 
 const QUEST_POOL = [
@@ -50,9 +50,9 @@ const QUEST_POOL = [
   { id: 'sekersiz',t: 'Bugün şekerli içecek içme',          xp: 25, manual: true }
 ];
 
-const BOSS_MAX = 500;
-const BOSS_DMG = { direnis: 70, foto_red: 60, temiz_gun: 50, tarti: 15 };
-const BOSS_HEAL = 40;
+const WALL_MAX = 500;
+const WALL_DMG = { direnis: 70, foto_red: 60, temiz_gun: 50, tarti: 15 };
+const WALL_REBUILD = 40;
 
 const Game = {
   state() { return Store.data.game; },
@@ -84,7 +84,7 @@ const Game = {
     const gain = XP[kind] || 0;
     if (gain) { g.xp += gain; events.push({ type: 'xp', amount: gain }); }
 
-    const dmg = BOSS_DMG[kind];
+    const dmg = WALL_DMG[kind];
     if (dmg) {
       const killed = this.hitBoss(dmg);
       events.push({ type: 'boss', damage: dmg, killed });
@@ -93,7 +93,7 @@ const Game = {
         events.push({ type: 'xp', amount: XP.boss });
       }
     }
-    if (kind === 'yedi') this.healBoss(BOSS_HEAL);
+    if (kind === 'yedi') this.rebuildWall(WALL_REBUILD);
 
     this.checkBadges(meta).forEach(b => events.push({ type: 'badge', badge: b }));
 
@@ -231,18 +231,18 @@ const Game = {
     return { xp: q.xp, all: this.quests().every(x => x.done) };
   },
 
-  /* --- haftalık canavar --- */
+  /* --- haftalık duvar --- */
   boss() {
     const g = this.state();
     const wk = weekKey();
     if (!g.boss || g.boss.week !== wk) {
-      g.boss = { week: wk, hp: BOSS_MAX, max: BOSS_MAX };
+      g.boss = { week: wk, hp: WALL_MAX, max: WALL_MAX };
       Store.save();
     }
     return g.boss;
   },
 
-  hitBoss(dmg) {
+  hitBoss(dmg) {   // duvara vur
     const b = this.boss();
     if (b.hp <= 0) return false;
     b.hp = Math.max(0, b.hp - dmg);
@@ -250,7 +250,7 @@ const Game = {
     return false;
   },
 
-  healBoss(amount) {
+  rebuildWall(amount) {
     const b = this.boss();
     if (b.hp <= 0) return;
     b.hp = Math.min(b.max, b.hp + amount);

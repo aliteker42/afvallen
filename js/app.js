@@ -246,12 +246,12 @@ function renderGame() {
 function renderBoss() {
   const b = Game.boss();
   const pct = (b.hp / b.max) * 100;
-  $('#boss-hp-text').textContent = b.hp > 0 ? `${b.hp} / ${b.max}` : 'DEVRİLDİ';
+  $('#boss-hp-text').textContent = b.hp > 0 ? `${b.hp} / ${b.max}` : 'YIKILDI';
   $('#boss-fill').style.width = pct.toFixed(1) + '%';
-  $('#boss-face').textContent = b.hp === 0 ? '💀' : b.hp < b.max * 0.35 ? '😰' : '👹';
+  $('#boss-face').textContent = b.hp === 0 ? '🏁' : b.hp < b.max * 0.35 ? '🪨' : '🧱';
   $('#boss-hint').textContent = b.hp === 0
-    ? `Bu haftanın canavarı bitti. Toplam ${Game.state().bossKills} canavar devirdin. Yeni hafta yenisini getirir.`
-    : 'Her atlattığın kriz ona hasar verir, her teslim oluş onu iyileştirir. Hafta bitmeden devir.';
+    ? `Bu haftanın duvarı yıkıldı. Toplam ${Game.state().bossKills} duvar yıktın. Yeni hafta yenisini getirir.`
+    : 'Her atlattığın kriz duvardan bir parça götürür, her teslim oluş onu geri örer. Hafta bitmeden yık.';
 }
 
 function renderBadges() {
@@ -277,7 +277,7 @@ function celebrate(events) {
   if (levelUp || badges.length || kill) confetti();
 
   if (kill) {
-    showAward('💀', 'CANAVAR DEVRİLDİ', 'Bu haftanın can sıkıntısı canavarını bitirdin.');
+    showAward('🏁', 'DUVAR YIKILDI', 'Bu haftanın can sıkıntısı duvarını yıktın.');
     vibrate([60, 80, 60, 80, 160]);
   } else if (levelUp) {
     showAward(levelUp.level.icon, `Seviye ${levelUp.level.n}`, levelUp.level.title);
@@ -856,7 +856,7 @@ function closePanic(outcome) {
     }
     vibrate([40, 60, 40]);
   } else {
-    toast('Canavar biraz iyileşti. Bir sonrakinde devir.', 'bad');
+    toast('Duvar biraz geri örüldü. Bir sonrakinde yık.', 'bad');
   }
 }
 

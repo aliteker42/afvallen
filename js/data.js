@@ -47,7 +47,6 @@ const QUICK_FOODS = [
   { n: "Cips (1 paket)", k: 500, p: 6 },
   { n: "Çikolata (1 tablet)", k: 530, p: 7 },
   { n: "Kola (330ml)", k: 139, p: 0 },
-  { n: "Bira (500ml)", k: 215, p: 2 },
   { n: "Baklava (2 dilim)", k: 400, p: 5 },
   { n: "Kuruyemiş (50g)", k: 300, p: 9 }
 ];
@@ -117,9 +116,7 @@ const FOOD_DB = QUICK_FOODS.concat([
   { n: "Kek (1 dilim)", k: 300, p: 4 },
   { n: "Bisküvi (5 adet)", k: 220, p: 3 },
   { n: "Kraker (1 paket)", k: 180, p: 4 },
-  { n: "Protein tozu (1 ölçek)", k: 120, p: 24 },
-  { n: "Rakı (1 duble)", k: 200, p: 0 },
-  { n: "Şarap (1 kadeh)", k: 125, p: 0 }
+  { n: "Protein tozu (1 ölçek)", k: 120, p: 24 }
 ]);
 
 /* İsimden yerel eşleşme — API'ye gitmeden kalori bulur */
