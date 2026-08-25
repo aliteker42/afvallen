@@ -64,9 +64,10 @@ input,select,button,textarea{font-family:inherit;font-size:16px}
 
 /* progress */
 .progress-wrap{margin-top:18px}
-.progress-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--txt-2);margin-bottom:12px;font-variant-numeric:tabular-nums}
-.prog-start{text-align:left}
-.prog-goal-simple{text-align:right;color:var(--txt);font-weight:600}
+.progress-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--txt-2);margin-bottom:12px;font-variant-numeric:tabular-nums;gap:10px}
+.prog-start{flex:0.6;text-align:left}
+.prog-now{flex:1;text-align:center;color:var(--txt);font-weight:600}
+.prog-goal-simple{flex:0.6;text-align:right;color:var(--txt);font-weight:600}
 .progress-track{height:8px;background:var(--bg-2);border-radius:99px;position:relative;overflow:hidden}
 .progress-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
 .progress-marker{position:absolute;top:-2px;width:2px;height:12px;background:var(--txt-3);border-radius:1px}
