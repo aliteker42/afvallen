@@ -398,21 +398,73 @@ async function onPhoto(e) {
   }
   pendingPhoto = thumb;
 
-  const mode = Photo.mode();
+  showMethodChooser(box, thumb, full);
+}
 
-  if (mode === 'app') {
-    await shareForAnalysis(box, thumb, full);
-    return;
-  }
+/* Her fotoğrafta yöntemi sen seçiyorsun. Ayarlardaki tercih sadece
+   hangisinin başta ve vurgulu duracağını belirler. */
+function showMethodChooser(box, thumb, full) {
+  const pref = Photo.mode();
+  const hasKey = Photo.hasKey();
 
-  if (mode === 'off' || !Photo.hasKey()) {
-    showPhotoManual(box, thumb);
-    return;
-  }
+  const methods = {
+    app: {
+      icon: '📲', title: 'Uygulamaya gönder',
+      sub: 'Claude / ChatGPT · ücretsiz',
+      run: () => shareForAnalysis(box, thumb, full)
+    },
+    api: {
+      icon: '⚡', title: hasKey ? 'API ile analiz et' : 'API ile analiz et',
+      sub: hasKey ? 'tek dokunuş · ~0.1 cent' : 'anahtar gerekiyor — ayarlara git',
+      run: () => hasKey ? runApiAnalysis(box, thumb, full) : goToApiSettings()
+    },
+    off: {
+      icon: '✍️', title: 'Elle gir',
+      sub: 'kaloriyi kendin yaz',
+      run: () => { box.innerHTML = `<img src="${thumb}" alt="">`; showPhotoManual(box, thumb, true); }
+    }
+  };
 
+  const order = [pref].concat(Object.keys(methods).filter(k => k !== pref));
+
+  box.innerHTML = `
+    <img src="${thumb}" alt="">
+    <div class="label" style="margin-bottom:8px">Nasıl analiz edelim?</div>
+    <div class="method-list">
+      ${order.map((k, i) => `
+        <button class="method ${i === 0 ? 'primary' : ''}" data-method="${k}">
+          <span class="method-ic">${methods[k].icon}</span>
+          <span class="method-body">
+            <span class="method-t">${escapeHtml(methods[k].title)}</span>
+            <span class="method-s">${escapeHtml(methods[k].sub)}</span>
+          </span>
+        </button>`).join('')}
+    </div>
+    <button class="ghost-btn small" id="method-cancel">Vazgeç</button>`;
+
+  box.querySelectorAll('[data-method]').forEach(b => {
+    b.addEventListener('click', () => methods[b.dataset.method].run());
+  });
+  // seçenekler ekranın altında kalmasın
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $('#method-cancel').addEventListener('click', () => {
+    box.classList.add('hidden'); box.innerHTML = '';
+  });
+}
+
+function goToApiSettings() {
+  go('ayarlar');
+  const el = $('#mode-picker');
+  Store.data.analyzeMode = 'api';
+  Store.save();
+  fillSettings();
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  toast('Anahtarı gir, sonra fotoğrafı tekrar çek', 'bad');
+}
+
+async function runApiAnalysis(box, thumb, full) {
   box.innerHTML = `<img src="${thumb}" alt=""><div class="spinner"></div>
     <div class="hint" style="text-align:center">Analiz ediliyor…</div>`;
-
   try {
     const r = await Photo.analyze(full);
     showPhotoResult(box, thumb, r);
@@ -701,13 +753,9 @@ function answerHunger(v) {
 }
 
 function updatePhotoHint() {
-  const mode = Photo.mode();
-  $('#photo-hint').textContent =
-    mode === 'app' ? 'Fotoğrafı telefondaki Claude ya da ChatGPT uygulamasına gönderip cevabı geri yapıştıracaksın. Ücretsiz.'
-    : mode === 'api' ? (Photo.hasKey()
-        ? 'Anahtar kayıtlı. Fotoğraf çek, kaloriyi tahmin edeyim.'
-        : 'Analiz için Ayarlar\'dan Claude API anahtarını gir.')
-    : 'Fotoğraf kaydedilir, kaloriyi elle yazarsın.';
+  $('#photo-hint').textContent = Photo.hasKey()
+    ? 'Fotoğrafı çek, sonra yöntemi seç: telefondaki Claude/ChatGPT uygulamasına gönder (ücretsiz), API ile analiz et ya da elle yaz.'
+    : 'Fotoğrafı çek, sonra yöntemi seç: telefondaki Claude/ChatGPT uygulamasına gönder (ücretsiz) ya da elle yaz. API için Ayarlar\'dan anahtar gir.';
 }
 
 /* ---------------- bildirimler ---------------- */
@@ -879,11 +927,10 @@ function fillSettings() {
 
   const mode = Photo.mode();
   $$('.mode').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
-  $('#api-settings').classList.toggle('hidden', mode !== 'api');
   $('#mode-hint').textContent = {
-    app: 'Telefondaki Claude ya da ChatGPT uygulaması API değildir — abonelik ayrı, API ayrı faturalanır ve bir web sayfası o uygulamaya doğrudan bağlanamaz. Bu yüzden köprü paylaş sayfası: fotoğraf oraya gider, cevabı geri yapıştırırsın. Android\'de cevabı "Yeniden 104"e paylaşırsan otomatik okunur.',
-    api: 'Tek dokunuş, uygulamadan çıkmadan. Anthropic Console\'dan bir anahtar gerekir.',
-    off: 'Fotoğraf kaydedilir, kaloriyi elle yazarsın. Yerel yemek listesi yine çalışır.'
+    app: 'Fotoğraf çektiğinde bu seçenek başta ve vurgulu gelir. Telefondaki Claude/ChatGPT uygulaması API değildir — abonelik ayrı faturalanır ve bir web sayfası ona doğrudan bağlanamaz; bu yüzden paylaş sayfası köprü olarak kullanılır. Android\'de cevabı "Yeniden 104"e paylaşırsan otomatik okunur.',
+    api: 'Fotoğraf çektiğinde bu seçenek başta gelir. Tek dokunuş, uygulamadan çıkmadan — anahtar aşağıda.',
+    off: 'Fotoğraf çektiğinde elle giriş başta gelir. Diğer ikisi yine listede durur.'
   }[mode];
 
   $('#set-model').value = Store.data.apiModel;

@@ -50,7 +50,7 @@ Sunucu yok, push servisi yok; her şey cihazda üretilir. Ana ekrana kurulu Chro
 
 ### Fotoğrafla kalori
 
-Üç yöntem var, Ayarlar'dan seçilir.
+Fotoğrafı çektikten sonra **üç yöntem birden karşına çıkar**, her seferinde istediğini seçersin. Ayarlardaki tercih yalnızca hangisinin başta ve vurgulu duracağını belirler.
 
 **📲 Telefondaki uygulama (varsayılan, ücretsiz).** Telefonundaki Claude ya da ChatGPT uygulamasını kullanır. Fotoğrafı çek → "Uygulamaya gönder" → paylaş sayfasından Claude'u seç (hazır istem fotoğrafla birlikte gider) → gelen cevabı uygulamaya yapıştır. Cevap JSON da olabilir düz metin de; *"Adana kebap, yaklaşık 650 kcal ve 35 g protein"* cümlesinden de rakamları çıkarır.
 
@@ -58,7 +58,7 @@ Android'de daha kısası var: uygulama bir **paylaşım hedefi** olarak kayıtl�
 
 > **Neden doğrudan bağlanmıyor?** Telefondaki Claude/ChatGPT uygulaması API değil. Abonelik (Claude Pro, ChatGPT Plus) ile API erişimi ayrı ürünler, ayrı faturalanır; bir web sayfasının o uygulamaya prompt gönderip cevabı programatik olarak alması için herhangi bir genel arayüz yok. Paylaş sayfası bu yüzden köprü: birkaç dokunuş fazla, ama sıfır ek maliyet.
 
-**⚡ Doğrudan API.** Tek dokunuş, uygulamadan çıkmadan. Anthropic Console'dan bir anahtar gerekir.
+**⚡ Doğrudan API.** Tek dokunuş, uygulamadan çıkmadan. Anthropic Console'dan bir anahtar gerekir; anahtar yokken bu seçeneğe basmak seni doğrudan ayarlara götürür.
 
 **✍️ Kapalı.** Fotoğraf kaydedilir, kaloriyi elle yazarsın.
 
