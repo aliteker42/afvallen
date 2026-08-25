@@ -28,6 +28,18 @@
       <button class="icon-btn btn-settings" aria-label="Ayarlar">⚙</button>
     </header>
 
+    <button class="xp-strip" id="xp-strip">
+      <span class="xp-badge" id="xp-icon">🥚</span>
+      <span class="xp-body">
+        <span class="xp-top">
+          <span class="xp-title" id="xp-title">Çaylak</span>
+          <span class="xp-num" id="xp-num">0 XP</span>
+        </span>
+        <span class="xp-track"><span class="xp-fill" id="xp-fill"></span></span>
+        <span class="xp-next" id="xp-next">—</span>
+      </span>
+    </button>
+
     <div class="hero card">
       <div class="hero-top">
         <div>
@@ -100,6 +112,22 @@
     <div class="card coach" id="card-coach">
       <div class="coach-icon">💬</div>
       <div class="coach-text" id="coach-text">—</div>
+    </div>
+
+    <div class="card quests">
+      <div class="chart-head">
+        <div class="label">Günün görevleri</div>
+        <div class="quest-count" id="quest-count">0/3</div>
+      </div>
+      <div id="quest-list" class="quest-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="chart-head">
+        <div class="label">Tartı serisi</div>
+        <div class="streak-pill" id="streak-pill">🔥 0 gün</div>
+      </div>
+      <div id="streak-cal" class="streak-cal"></div>
     </div>
 
     <div class="quick-actions">
@@ -220,6 +248,27 @@
       <span class="panic-text">CANIM SIKILIYOR</span>
       <span class="panic-sub">90 saniye ver bana</span>
     </button>
+
+    <div class="card boss-card">
+      <div class="chart-head">
+        <div class="label">Haftanın canavarı</div>
+        <div class="boss-hp-text" id="boss-hp-text">—</div>
+      </div>
+      <div class="boss-stage">
+        <div class="boss-face" id="boss-face">👹</div>
+        <div class="boss-name">Can Sıkıntısı Canavarı</div>
+      </div>
+      <div class="boss-bar"><div class="boss-fill" id="boss-fill"></div></div>
+      <div class="hint" id="boss-hint">—</div>
+    </div>
+
+    <div class="card">
+      <div class="chart-head">
+        <div class="label">Rozetler</div>
+        <div class="quest-count" id="badge-count">0/18</div>
+      </div>
+      <div id="badge-grid" class="badge-grid"></div>
+    </div>
 
     <div class="card">
       <div class="label">Gerçekten aç mıyım?</div>
@@ -415,6 +464,7 @@
 <script src="js/photo.js"></script>
 <script src="js/notify-messages.js"></script>
 <script src="js/notify.js"></script>
+<script src="js/game.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

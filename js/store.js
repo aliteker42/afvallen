@@ -28,6 +28,15 @@ const DEFAULTS = {
     sent: []
   },
   pending: null,        // paylaşıma gönderilen fotoğraf, cevap dönene kadar bekler
+  game: {
+    xp: 0,
+    badges: [],
+    quests: null,       // {d, picked[], done[]}
+    boss: null,         // {week, hp, max}
+    bossKills: 0,
+    cleanDays: 0,
+    lastSettled: null
+  },
   createdAt: null
 };
 

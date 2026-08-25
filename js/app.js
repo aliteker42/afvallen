@@ -19,8 +19,11 @@ function init() {
   bindHunger();
   bindSettings();
   bindNotify();
+  bindGame();
   updatePhotoHint();
+  const settled = Game.settleYesterday();
   renderAll();
+  if (settled.length) setTimeout(() => celebrate(settled), 900);
   registerSW();
   handleIncomingShare();
   openFromHash();
@@ -72,7 +75,7 @@ function go(name) {
   window.scrollTo(0, 0);
   if (name === 'tarti') renderChart();
   if (name === 'yemek') renderMeals();
-  if (name === 'sikinti') renderBoredom();
+  if (name === 'sikinti') { renderBoredom(); renderBoss(); renderBadges(); }
   if (name === 'saglik') renderHealth();
   if (name === 'ayarlar') fillSettings();
 }
@@ -86,6 +89,7 @@ function renderAll() {
   renderMilestoneList();
   renderHistory();
   renderHealth();
+  renderGame();
 }
 
 function renderToday() {
@@ -169,6 +173,162 @@ function renderToday() {
   }
 
   $('#coach-text').textContent = Coach.pick('idle');
+}
+
+/* ---------------- oyun ---------------- */
+function bindGame() {
+  $('#xp-strip').addEventListener('click', () => { go('sikinti'); toast('Rozetler aşağıda'); });
+
+  // Otomatik görevler kendiliğinden işaretlenir; tıklamak onları
+  // bedavaya kapatmak yerine yapılacağı ekrana götürür.
+  const QUEST_ROUTE = {
+    tarti: () => go('tarti'),
+    direnis: () => { go('sikinti'); openPanic(); },
+    protein: () => go('yemek'),
+    ogun3: () => go('yemek'),
+    kalori: () => go('yemek')
+  };
+
+  $('#quest-list').addEventListener('click', e => {
+    const b = e.target.closest('[data-quest]');
+    if (!b || b.classList.contains('done')) return;
+    const id = b.dataset.quest;
+
+    if (QUEST_ROUTE[id]) { QUEST_ROUTE[id](); return; }
+
+    const r = Game.completeQuest(id);
+    if (!r) return;
+    renderGame();
+    if (r.all) { celebrate([{ type: 'xp', amount: r.xp }]); toast('Günün üç görevi de bitti 🎉', 'win'); }
+    else toast(`+${r.xp} XP`, 'win');
+    vibrate(30);
+  });
+}
+
+function renderGame() {
+  // otomatik biten görevlerin XP'si burada yazılır
+  const questEvents = Game.syncQuests();
+
+  const lv = Game.level();
+  $('#xp-icon').textContent = lv.icon;
+  $('#xp-title').textContent = `Seviye ${lv.n} · ${lv.title}`;
+  $('#xp-num').textContent = `${lv.xp} XP`;
+  $('#xp-fill').style.width = lv.pct.toFixed(1) + '%';
+  $('#xp-next').textContent = lv.nextTitle
+    ? `${lv.toNext} XP sonra: ${lv.nextTitle}`
+    : 'En üst seviye';
+
+  // görevler
+  const qs = Game.quests();
+  $('#quest-count').textContent = `${qs.filter(q => q.done).length}/${qs.length}`;
+  $('#quest-list').innerHTML = qs.map(q => `
+    <button class="quest ${q.done ? 'done' : ''} ${q.manual ? 'manual' : 'auto'}"
+            data-quest="${q.id}" ${q.done ? 'disabled' : ''}>
+      <span class="quest-box">${q.done ? '✓' : (q.manual ? '' : '›')}</span>
+      <span class="quest-t">${escapeHtml(q.t)}</span>
+      <span class="quest-xp">+${q.xp}</span>
+    </button>`).join('');
+
+  // seri
+  const st = Game.streak();
+  $('#streak-pill').textContent = `${st > 0 ? '🔥' : '💤'} ${st} gün`;
+  $('#streak-cal').innerHTML = Game.calendar(14).map(c => `
+    <div class="cal-day ${c.on ? 'on' : ''} ${c.today ? 'now' : ''}" title="${c.d}">
+      ${c.on ? '●' : ''}
+    </div>`).join('');
+
+  if (questEvents.length) {
+    const total = questEvents.reduce((a, e) => a + e.amount, 0);
+    setTimeout(() => toast(`Görev tamam · +${total} XP`, 'win'), 400);
+  }
+}
+
+function renderBoss() {
+  const b = Game.boss();
+  const pct = (b.hp / b.max) * 100;
+  $('#boss-hp-text').textContent = b.hp > 0 ? `${b.hp} / ${b.max}` : 'DEVRİLDİ';
+  $('#boss-fill').style.width = pct.toFixed(1) + '%';
+  $('#boss-face').textContent = b.hp === 0 ? '💀' : b.hp < b.max * 0.35 ? '😰' : '👹';
+  $('#boss-hint').textContent = b.hp === 0
+    ? `Bu haftanın canavarı bitti. Toplam ${Game.state().bossKills} canavar devirdin. Yeni hafta yenisini getirir.`
+    : 'Her atlattığın kriz ona hasar verir, her teslim oluş onu iyileştirir. Hafta bitmeden devir.';
+}
+
+function renderBadges() {
+  const owned = Game.state().badges;
+  $('#badge-count').textContent = `${owned.length}/${BADGES.length}`;
+  $('#badge-grid').innerHTML = BADGES.map(b => {
+    const has = owned.includes(b.id);
+    return `<div class="badge ${has ? 'on' : ''}" title="${escapeHtml(b.d)}">
+      <div class="badge-ic">${has ? b.i : '🔒'}</div>
+      <div class="badge-t">${escapeHtml(has ? b.t : '???')}</div>
+    </div>`;
+  }).join('');
+}
+
+/* Ödül olaylarını kutla: konfeti, rozet kartı, toast */
+function celebrate(events) {
+  if (!events || !events.length) return;
+  const badges = events.filter(e => e.type === 'badge').map(e => e.badge);
+  const levelUp = events.find(e => e.type === 'level');
+  const kill = events.find(e => e.type === 'boss' && e.killed);
+  const xp = events.filter(e => e.type === 'xp').reduce((a, e) => a + e.amount, 0);
+
+  if (levelUp || badges.length || kill) confetti();
+
+  if (kill) {
+    showAward('💀', 'CANAVAR DEVRİLDİ', 'Bu haftanın can sıkıntısı canavarını bitirdin.');
+    vibrate([60, 80, 60, 80, 160]);
+  } else if (levelUp) {
+    showAward(levelUp.level.icon, `Seviye ${levelUp.level.n}`, levelUp.level.title);
+    vibrate([50, 70, 50, 120]);
+  } else if (badges.length) {
+    showAward(badges[0].i, badges[0].t, badges[0].d);
+    vibrate([40, 60, 40]);
+  } else if (xp) {
+    toast(`+${xp} XP`, 'win');
+  }
+
+  // birden fazla rozet açıldıysa sırayla göster
+  badges.slice(levelUp || kill ? 0 : 1).forEach((b, i) => {
+    setTimeout(() => showAward(b.i, b.t, b.d), 2200 * (i + 1));
+  });
+}
+
+let awardTimer = null;
+function showAward(icon, title, sub) {
+  let el = $('#award');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'award';
+    el.className = 'award';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<div class="award-ic">${icon}</div>
+    <div class="award-t">${escapeHtml(title)}</div>
+    <div class="award-s">${escapeHtml(sub)}</div>`;
+  el.classList.remove('hidden');
+  el.classList.add('show');
+  clearTimeout(awardTimer);
+  awardTimer = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function confetti() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#3fb950', '#58a6ff', '#e3b341', '#bc8cff', '#f85149'];
+  const host = document.createElement('div');
+  host.className = 'confetti';
+  for (let i = 0; i < 42; i++) {
+    const p = document.createElement('i');
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = (Math.random() * 0.35).toFixed(2) + 's';
+    p.style.animationDuration = (1.5 + Math.random() * 0.9).toFixed(2) + 's';
+    p.style.transform = `rotate(${Math.random() * 360}deg)`;
+    host.appendChild(p);
+  }
+  document.body.appendChild(host);
+  setTimeout(() => host.remove(), 2800);
 }
 
 /* ---------------- sağlık ---------------- */
@@ -291,6 +451,9 @@ function saveWeight() {
   $('#coach-text').textContent = msg;
   $('#weigh-hint').textContent = msg;
   checkMilestoneHit(v);
+  const erken = new Date().getHours() < 9;
+  celebrate(Game.award('tarti', erken ? 'sabah' : null));
+  renderGame();
   toast('Kaydedildi', 'win');
 }
 
@@ -298,7 +461,10 @@ function checkMilestoneHit(kg) {
   const ms = Calc.milestones(Store.data.profile, Store.data.weights);
   const hit = ms.find(m => m.done && Math.abs(m.kg - Math.ceil(kg)) < 5 && kg <= m.kg);
   if (hit && kg <= hit.kg) {
-    setTimeout(() => toast(`🎉 ${hit.kg} kg geçildi!`, 'win'), 1200);
+    setTimeout(() => {
+      celebrate(Game.award('kilometre'));
+      toast(`🎉 ${hit.kg} kg geçildi! +${XP.kilometre} XP`, 'win');
+    }, 1200);
     vibrate([40, 60, 40, 60, 120]);
   }
 }
@@ -312,7 +478,8 @@ function bindMeals() {
     if (!kcal) { toast('Kalori gir', 'bad'); return; }
     Store.addMeal({ name, kcal, protein });
     clearMealForm();
-    renderMeals(); renderToday();
+    celebrate(Game.award('ogun'));
+    renderMeals(); renderToday(); renderGame();
     toast(`${kcal} kcal eklendi`);
   });
 
@@ -323,7 +490,8 @@ function bindMeals() {
     if (!b) return;
     const f = QUICK_FOODS[+b.dataset.qf];
     Store.addMeal({ name: f.n, kcal: f.k, protein: f.p });
-    renderMeals(); renderToday();
+    celebrate(Game.award('ogun'));
+    renderMeals(); renderToday(); renderGame();
     toast(`${f.n} · ${f.k} kcal`);
   });
 
@@ -467,6 +635,7 @@ async function runApiAnalysis(box, thumb, full) {
     <div class="hint" style="text-align:center">Analiz ediliyor…</div>`;
   try {
     const r = await Photo.analyze(full);
+    Game.award('', 'foto');
     showPhotoResult(box, thumb, r);
   } catch (err) {
     box.innerHTML = `<img src="${thumb}" alt="">
@@ -612,13 +781,16 @@ function showPhotoResult(box, thumb, r) {
       name: r.name + ' (yarım)', kcal: Math.round(r.kcal / 2),
       protein: Math.round(r.protein / 2), photo: thumb
     });
+    celebrate(Game.award('ogun', 'yarim'));
     finish(`${Math.round(r.kcal / 2)} kcal eklendi — iyi karar`, 'win');
   });
   $('#pr-skip').addEventListener('click', () => {
     Store.addBoredom(`Fotoğraf: ${r.name} (${r.kcal} kcal) — yemedi`, 'resisted');
-    renderBoredom();
+    const events = Game.award('foto_red');
+    renderBoredom(); renderGame();
+    celebrate(events);
     vibrate([30, 50, 30]);
-    finish(`${r.kcal} kcal kurtardın 💪`, 'win');
+    finish(`${r.kcal} kcal kurtardın · +${XP.foto_red} XP 💪`, 'win');
   });
 }
 
@@ -673,13 +845,18 @@ function closePanic(outcome) {
   clearInterval(panicTimer);
   $('#overlay-panic').classList.add('hidden');
   Store.addBoredom(currentTask ? currentTask.t : '', outcome);
-  renderBoredom(); renderToday();
+  const gece = new Date().getHours() >= 22;
+  const events = Game.award(outcome === 'resisted' ? 'direnis' : 'yedi', gece && outcome === 'resisted' ? 'gece' : null);
+  renderBoredom(); renderToday(); renderGame(); renderBoss(); renderBadges();
   if (outcome === 'resisted') {
+    celebrate(events);
     const n = Store.resistCount();
-    toast(`${n}. kez atlattın 💪`, 'win');
+    if (!events.some(e => e.type === 'badge' || e.type === 'level' || (e.type === 'boss' && e.killed))) {
+      toast(`${n}. kez atlattın · +${XP.direnis} XP 💪`, 'win');
+    }
     vibrate([40, 60, 40]);
   } else {
-    toast('Kaydedildi. Bir sonrakinde tekrar dene.', 'bad');
+    toast('Canavar biraz iyileşti. Bir sonrakinde devir.', 'bad');
   }
 }
 
