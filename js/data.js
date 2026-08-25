@@ -60,7 +60,10 @@ const COACH = {
       "Bugün tartıya çıkmadıysan sebebi bellidir. Çık.",
       "Hedefe {kalan} kg. Bu rakam kendi kendine küçülmeyecek.",
       "Bir yıl kaybettin. Bugünü de kaybetme.",
-      "Aç değilsin. Sıkılıyorsun. İkisi aynı şey değil ve sen bunu biliyorsun."
+      "Aç değilsin. Sıkılıyorsun. İkisi aynı şey değil ve sen bunu biliyorsun.",
+      "Tansiyonun yüksek, gece doğru düzgün nefes alamıyorsun. Bunlar kilonun faturası, yaşın değil.",
+      "Merdiven çıkarken tıkanmandan şikâyet ediyorsun ama düzeltecek tek şey elinde: bugün ne yediğin.",
+      "Her gece horlayarak uyuduğun için değil, 127 kiloyla yattığın için yorgun kalkıyorsun."
     ],
     gain: [
       "Terazi yukarı gitti. Sebebi dün akşamdı ve sen ne olduğunu biliyorsun.",
@@ -73,7 +76,9 @@ const COACH = {
     panic: [
       "Şimdi yersen yarın sabah terazide görürsün. Her seferinde öyle oldu.",
       "Bu his 20 dakika sürer. Pişmanlık 3 gün.",
-      "104 kg olan adam bu anda yemedi. O yüzden 104'tü."
+      "104 kg olan adam bu anda yemedi. O yüzden 104'tü.",
+      "Şimdi yersen bu gece yine tıkanarak uyursun. Bunu bilerek uzat elini.",
+      "Tansiyonun her kiloyla düşüyor. Bu atıştırmalık o düşüşü durdurmak demek."
     ]
   },
   soguk: {
@@ -81,14 +86,17 @@ const COACH = {
       "Hedefe {kalan} kg. Günlük 1000 kcal açıkla ≈ {hafta} hafta.",
       "BMI {bmi}. Hedef kiloda BMI {bmigoal} olacak.",
       "Günlük yakım ≈ {tdee} kcal. Hedef alım {hedefkcal} kcal.",
-      "Son 7 gün: {d7} kg. Son 30 gün: {d30} kg."
+      "Son 7 gün: {d7} kg. Son 30 gün: {d30} kg.",
+      "Verilen kilo: {verilen} kg. Tahmini sistolik düşüş: −{mmhg} mmHg.",
+      "Diz yükü her adımda {diz} kg azaldı. %10 kayıpta uyku apnesi ortalama dörtte bir hafifler."
     ],
     gain: ["+{fark} kg. Tek günlük veri, trend çizgisine bak."],
     loss: ["-{fark} kg. Trend aşağı."],
     panic: [
       "Ortalama atıştırmalık 450 kcal ≈ günlük açığın yarısı.",
       "500 kcal fazla = 0.065 kg yağ ≈ 15 günde 1 kg.",
-      "Bu his ortalama 12-20 dakikada geçer. Ölçüldü."
+      "Bu his ortalama 12-20 dakikada geçer. Ölçüldü.",
+      "1 kg ≈ 1 mmHg sistolik. Her geri alınan kilo o kadar geri gider."
     ]
   },
   koc: {
@@ -97,7 +105,11 @@ const COACH = {
       "Hedefe {kalan} kg kaldı. Parça parça: önce {sonraki} kg'ı gör.",
       "Tartıya çıkmaktan korkuyordun, çıktın. En zor kısım bitti bile.",
       "Kötü bir gün planı bozmaz. Kötü bir hafta bozar. Bugün hangisi olacak?",
-      "Bugün mükemmel olmak zorunda değilsin. Sadece dünden iyi ol."
+      "Bugün mükemmel olmak zorunda değilsin. Sadece dünden iyi ol.",
+      "Terazi yavaş bir geri bildirim. Asıl haberi nefesin ve uykun verecek — onlar kilodan önce düzelir.",
+      "Hedef sadece rakam değil: tansiyonun düşsün, geceleri rahat uyu, merdivende tıkanma. Üçü de aynı yolda.",
+      "İlk 5 kiloda horlaman azalır, tansiyonun ~5 mmHg iner. Bunlar {kalan} kg beklemeden gelen kazançlar.",
+      "Sabah dinlenmiş kalkmak istiyorsan yol bu. Uyku hapı değil, boyun çevresi meselesi."
     ],
     gain: [
       "+{fark} kg — su olabilir, tuz olabilir, dün akşam olabilir. Panik yok, sadece bugüne odaklan.",
@@ -110,7 +122,9 @@ const COACH = {
     panic: [
       "Dur bir saniye. Karnın mı aç, canın mı sıkkın? Genelde ikincisi.",
       "Bu isteğin bir ömrü var: 15-20 dakika. Sen ondan uzun dayanırsın.",
-      "Şu an yemezsen yarın sabah bu ana teşekkür edeceksin."
+      "Şu an yemezsen yarın sabah bu ana teşekkür edeceksin.",
+      "Bu gece nasıl uyuyacağını şu an veriyorsun. Geç saatte yenen şey en çok uykuyu vuruyor.",
+      "Nefesin ve tansiyonun için verdiğin savaşta bu an küçük ama sayılan bir tur."
     ]
   }
 };
@@ -127,3 +141,62 @@ const MILESTONE_NOTES = {
   85: "85. BMI 27 — fazla kilolu sınırının alt ucu.",
   78: "78 — BMI 25. Normal kilo. Bitiş çizgisi."
 };
+
+/* ---------------- Sağlık ---------------- */
+/* Ölçüm yok — bunlar kilo düştükçe açılan, dert bazlı yol haritaları.
+   kg: mutlak kilo kaybı eşiği · pct: başlangıç kilosunun yüzdesi */
+
+const HEALTH_TRACKS = [
+  {
+    id: "tansiyon",
+    icon: "🩸",
+    title: "Tansiyon",
+    lead: "Ortalama olarak verilen her 1 kg, büyük tansiyonu yaklaşık 1 mmHg düşürür. Bu senin en hızlı kazandığın cephe — ilk haftalarda bile hissedilir.",
+    steps: [
+      { kg: 2,   t: "Yaklaşık 2 mmHg aşağı. Küçük görünür ama ölçülebilir bir düşüş." },
+      { kg: 5,   t: "~5 mmHg. Tuzu da kısarsan bu rahat 8-10 olur." },
+      { kg: 10,  t: "~10 mmHg — düşük doz bir tansiyon ilacının yaptığı işe denk." },
+      { kg: 15,  t: "~15 mmHg. İlaç kullanıyorsan doz konuşulacak seviye. Doktoruna sor." },
+      { kg: 23.7, t: "104'e dönüş. Çoğu insanda tansiyon bu noktada normal aralığa oturur." }
+    ]
+  },
+  {
+    id: "uyku",
+    icon: "😴",
+    title: "Uyku ve horlama",
+    lead: "Kilo boyun çevresinde ve dilin arkasında birikir; yatınca hava yolunu daraltan şey bu. Erimesi doğrudan uykuya yansır.",
+    steps: [
+      { kg: 3,   t: "Boyun çevresi incelmeye başlar, horlamanın sesi düşer." },
+      { pct: 5,  t: "Gece uyanmaların seyrekleşir, reflü hafifler. Sabah daha dinlenmiş kalkarsın." },
+      { pct: 10, t: "Uyku apnesi şiddeti ortalama dörtte bir azalır — en büyük sıçrama burada." },
+      { pct: 15, t: "Sabah baş ağrısı ve gün içi uyuklama belirgin geriler." },
+      { kg: 23.7, t: "Gece boyunca kesintisiz uyku yeniden mümkün hale gelir." }
+    ]
+  },
+  {
+    id: "nefes",
+    icon: "🫁",
+    title: "Nefes",
+    lead: "Fazla kilo hem göğsün üstünde ağırlık hem de her hareketle daha çok oksijen ihtiyacı demek. İkisi de kilo gidince birlikte düşer.",
+    steps: [
+      { kg: 4,  t: "Merdivende ilk fark: aynı kat, daha az soluk." },
+      { kg: 8,  t: "Sırtındaki 8 kg'lık çanta indi. Yürüyüş hızın kendiliğinden artar." },
+      { kg: 14, t: "Yatarken göğsündeki baskı azalır, düz yatmak kolaylaşır." },
+      { kg: 20, t: "Eğilip ayakkabı bağlamak nefesini kesmez." },
+      { kg: 23.7, t: "Konuşurken nefes almak için duraklamazsın." }
+    ]
+  },
+  {
+    id: "genel",
+    icon: "🦵",
+    title: "Eklemler ve metabolizma",
+    lead: "Terazide görünmeyen ama her adımda hissedilen taraf.",
+    steps: [
+      { kg: 1,   t: "Her adımda dizlerinden ~4 kg'lık yük kalkar." },
+      { pct: 5,  t: "Karaciğer yağlanmasının gerilemeye başladığı bilimsel eşik." },
+      { pct: 7,  t: "Tip 2 diyabete gidiş ciddi biçimde yavaşlar." },
+      { kg: 16,  t: "Diz ve bel yükü her adımda ~64 kg azaldı. Ağrı kesici ihtiyacı düşer." },
+      { kg: 20,  t: "Genelde 2 pantolon bedeni. Dolabın yarısı geri gelir." }
+    ]
+  }
+];

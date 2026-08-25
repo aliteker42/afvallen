@@ -1,5 +1,5 @@
 /* Çevrimdışı çalışsın diye basit önbellek */
-const CACHE = 'yeniden104-v1';
+const CACHE = 'yeniden104-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
   './js/data.js',
   './js/store.js',
   './js/calc.js',
+  './js/health.js',
   './js/chart.js',
   './js/coach.js',
   './js/photo.js',

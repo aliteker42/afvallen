@@ -84,3 +84,4 @@ const Chart = {
 </svg>`;
   }
 };
+

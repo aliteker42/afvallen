@@ -28,7 +28,10 @@ const Coach = {
       hafta: weekly > 0 ? Math.ceil(kalan / weekly) : '—',
       sonraki: next ? next.kg : p.goalWeight,
       d7: fmtDelta(Calc.changeOver(w, 7)),
-      d30: fmtDelta(Calc.changeOver(w, 30))
+      d30: fmtDelta(Calc.changeOver(w, 30)),
+      verilen: Health.lost(p, w).toFixed(1),
+      mmhg: Math.round(Health.lost(p, w)),
+      diz: Math.round(Health.lost(p, w) * 4)
     }, extra || {});
     return s.replace(/\{(\w+)\}/g, (m, k) => (vals[k] !== undefined ? vals[k] : m));
   },

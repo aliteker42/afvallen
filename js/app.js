@@ -31,7 +31,7 @@ function seedIfEmpty() {
 /* ---------------- nav ---------------- */
 function bindNav() {
   $$('[data-goto]').forEach(b => b.addEventListener('click', () => go(b.dataset.goto)));
-  $('#btn-goto-settings').addEventListener('click', () => go('ayarlar'));
+  $$('.btn-settings').forEach(b => b.addEventListener('click', () => go('ayarlar')));
 }
 
 function go(name) {
@@ -42,6 +42,7 @@ function go(name) {
   if (name === 'tarti') renderChart();
   if (name === 'yemek') renderMeals();
   if (name === 'sikinti') renderBoredom();
+  if (name === 'saglik') renderHealth();
   if (name === 'ayarlar') fillSettings();
 }
 
@@ -53,6 +54,7 @@ function renderAll() {
   renderBoredom();
   renderMilestoneList();
   renderHistory();
+  renderHealth();
 }
 
 function renderToday() {
@@ -124,7 +126,54 @@ function renderToday() {
     $('#card-milestone').classList.add('hidden');
   }
 
+  // sıradaki sağlık kazanımı
+  const gain = Health.nextGain(p, w);
+  if (gain) {
+    $('#gain-icon').textContent = gain.icon;
+    $('#gain-title').textContent = gain.text;
+    $('#gain-need').textContent = `${gain.track} · ${gain.remaining} kg kaldı`;
+    $('#card-gain').classList.remove('hidden');
+  } else {
+    $('#card-gain').classList.add('hidden');
+  }
+
   $('#coach-text').textContent = Coach.pick('idle');
+}
+
+/* ---------------- sağlık ---------------- */
+function renderHealth() {
+  const p = Store.data.profile;
+  const w = Store.data.weights;
+  const sum = Health.summary(p, w);
+
+  $('#gs-lost').textContent = sum.lost.toFixed(1);
+  $('#gs-bp').textContent = '−' + sum.sysDrop;
+  $('#gs-load').textContent = sum.kneeLoad;
+  $('#gs-hint').textContent = sum.lost < 0.1
+    ? 'Henüz kayıp yok. İlk kilo gittiği anda buradaki üç rakam da hareket etmeye başlar.'
+    : `${sum.total} kazanımın ${sum.unlocked} tanesi açıldı. Tansiyon ve diz yükü tahmini, ` +
+      'bilimsel ortalamalara dayanıyor.';
+
+  $('#tracks-host').innerHTML = Health.tracks(p, w).map(tr => `
+    <div class="card track">
+      <div class="track-head">
+        <div class="track-ic">${tr.icon}</div>
+        <div class="track-name">${escapeHtml(tr.title)}</div>
+        <div class="track-count ${tr.done ? 'some' : ''}">${tr.done}/${tr.total}</div>
+      </div>
+      <div class="track-lead">${escapeHtml(tr.lead)}</div>
+      <div class="steps">
+        ${tr.steps.map(st => {
+          const isNext = !st.done && tr.next && st.need === tr.next.need;
+          return `<div class="step ${st.done ? 'done' : ''} ${isNext ? 'next' : ''}">
+            <div class="step-dot">${st.done ? '✓' : ''}</div>
+            <div class="step-kg">−${st.need} kg</div>
+            <div class="step-t">${escapeHtml(st.text)}</div>
+            ${st.done ? '' : `<div class="step-left">${st.remaining} kg kaldı</div>`}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
 }
 
 function renderChart() {

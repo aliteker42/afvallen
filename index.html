@@ -25,7 +25,7 @@
         <div class="hdr-sub" id="hdr-date">—</div>
         <h1 class="hdr-title">Bugün</h1>
       </div>
-      <button class="icon-btn" id="btn-goto-settings" aria-label="Ayarlar">⚙</button>
+      <button class="icon-btn btn-settings" aria-label="Ayarlar">⚙</button>
     </header>
 
     <div class="hero card">
@@ -88,6 +88,15 @@
       </div>
     </div>
 
+    <div class="card gain-teaser" id="card-gain">
+      <div class="gain-icon" id="gain-icon">🩸</div>
+      <div class="gain-body">
+        <div class="label" style="margin-bottom:2px">Sıradaki sağlık kazanımı</div>
+        <div class="gain-title" id="gain-title">—</div>
+        <div class="gain-need" id="gain-need">—</div>
+      </div>
+    </div>
+
     <div class="card coach" id="card-coach">
       <div class="coach-icon">💬</div>
       <div class="coach-text" id="coach-text">—</div>
@@ -101,7 +110,7 @@
 
   <!-- ============ TARTI ============ -->
   <section class="page hidden" id="page-tarti">
-    <header class="hdr"><h1 class="hdr-title">Tartı</h1></header>
+    <header class="hdr"><h1 class="hdr-title">Tartı</h1><button class="icon-btn btn-settings" aria-label="Ayarlar">⚙</button></header>
 
     <div class="card weigh-in">
       <div class="label">Bugünün kilosu</div>
@@ -152,8 +161,11 @@
   <!-- ============ YEMEK ============ -->
   <section class="page hidden" id="page-yemek">
     <header class="hdr">
-      <h1 class="hdr-title">Yemek</h1>
-      <div class="hdr-sub" id="yemek-date">—</div>
+      <div>
+        <div class="hdr-sub" id="yemek-date">—</div>
+        <h1 class="hdr-title">Yemek</h1>
+      </div>
+      <button class="icon-btn btn-settings" aria-label="Ayarlar">⚙</button>
     </header>
 
     <div class="card day-summary">
@@ -194,7 +206,7 @@
 
   <!-- ============ SIKINTI ============ -->
   <section class="page hidden" id="page-sikinti">
-    <header class="hdr"><h1 class="hdr-title">Sıkıntı</h1></header>
+    <header class="hdr"><h1 class="hdr-title">Sıkıntı</h1><button class="icon-btn btn-settings" aria-label="Ayarlar">⚙</button></header>
 
     <div class="card streak-card">
       <div class="streak-num" id="streak-num">0</div>
@@ -216,6 +228,31 @@
     <div class="card">
       <div class="label">Son kayıtlar</div>
       <div id="boredom-log" class="history"></div>
+    </div>
+  </section>
+
+  <!-- ============ SAĞLIK ============ -->
+  <section class="page hidden" id="page-saglik">
+    <header class="hdr">
+      <h1 class="hdr-title">Sağlık</h1>
+      <button class="icon-btn btn-settings" aria-label="Ayarlar">⚙</button>
+    </header>
+
+    <div class="card gains-summary">
+      <div class="gs-row">
+        <div class="gs-item"><div class="gs-num" id="gs-lost">0.0</div><div class="label">kg verildi</div></div>
+        <div class="gs-item"><div class="gs-num" id="gs-bp">−0</div><div class="label">mmHg tansiyon</div></div>
+        <div class="gs-item"><div class="gs-num" id="gs-load">0</div><div class="label">kg diz yükü</div></div>
+      </div>
+      <div class="hint" id="gs-hint">—</div>
+    </div>
+
+    <div id="tracks-host"></div>
+
+    <div class="card disclaimer">
+      Buradaki rakamlar bilimsel ortalamalara dayalı tahminlerdir, kişisel tıbbi tavsiye değildir.
+      Tansiyon ilacı kullanıyorsan kilo verirken dozun düşmesi gerekebilir — bunu <b>kendi başına değil, doktorunla</b> yap.
+      Göğüs ağrısı, şiddetli nefes darlığı veya gece boğulma hissi varsa bekleme, hekime görün.
     </div>
   </section>
 
@@ -287,7 +324,7 @@
     <button class="tab" data-goto="tarti"><span>⚖️</span>Tartı</button>
     <button class="tab" data-goto="yemek"><span>🍽</span>Yemek</button>
     <button class="tab" data-goto="sikinti"><span>🛑</span>Sıkıntı</button>
-    <button class="tab" data-goto="ayarlar"><span>⚙️</span>Ayar</button>
+    <button class="tab" data-goto="saglik"><span>🩺</span>Sağlık</button>
   </nav>
 </div>
 
@@ -335,6 +372,7 @@
 <script src="js/store.js"></script>
 <script src="js/calc.js"></script>
 <script src="js/chart.js"></script>
+<script src="js/health.js"></script>
 <script src="js/coach.js"></script>
 <script src="js/photo.js"></script>
 <script src="js/app.js"></script>
