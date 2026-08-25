@@ -33,7 +33,10 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8'))"
           echo "Tüm dosyalar geçerli."
 
+      # enablement: depo ayarlarında Pages kapalıysa iş akışı kendisi açar
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
