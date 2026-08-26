@@ -1,13 +1,13 @@
 {
-  "name": "Yeniden 104",
-  "short_name": "104",
+  "name": "İrade",
+  "short_name": "İrade",
   "description": "Kişisel kilo takibi ve can sıkıntısı savunması",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0d1117",
-  "theme_color": "#0d1117",
+  "background_color": "#F6F8FA",
+  "theme_color": "#F6F8FA",
   "lang": "tr",
   "dir": "ltr",
   "categories": [

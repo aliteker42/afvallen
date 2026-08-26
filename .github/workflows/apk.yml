@@ -56,22 +56,22 @@ jobs:
       - name: APK'yı adlandır
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/debug/app-debug.apk dist/yeniden104.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk dist/irade.apk
           ls -lh dist/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: yeniden104-apk
-          path: dist/yeniden104.apk
+          name: irade-apk
+          path: dist/irade.apk
 
       - name: Sürüme yükle
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete apk-latest --yes --cleanup-tag 2>/dev/null || true
-          gh release create apk-latest dist/yeniden104.apk \
-            --title "Yeniden 104 · APK" \
-            --notes "Telefondan bu sayfayı aç, \`yeniden104.apk\` dosyasına dokun ve kur.
+          gh release create apk-latest dist/irade.apk \
+            --title "İrade · APK" \
+            --notes "Telefondan bu sayfayı aç, \`irade.apk\` dosyasına dokun ve kur.
 
           Uygulama içeriği https://aliteker42.github.io/afvallen/ adresinden yüklenir; siteyi güncellediğinde APK'yı tekrar kurmana gerek kalmaz.
 

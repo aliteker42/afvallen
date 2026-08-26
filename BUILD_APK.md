@@ -1,4 +1,4 @@
-# APK Build Guide - Yeniden 104
+# APK Build Guide - İrade
 
 ## 🚀 Optie 1: Lokaal builden (Makkelijk op Mac/Linux)
 

@@ -1376,7 +1376,7 @@ function fillSettings() {
   const mode = Photo.mode();
   $$('.mode').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
   $('#mode-hint').textContent = {
-    app: 'Fotoğraf çektiğinde bu seçenek başta ve vurgulu gelir. Telefondaki Claude/ChatGPT uygulaması API değildir — abonelik ayrı faturalanır ve bir web sayfası ona doğrudan bağlanamaz; bu yüzden paylaş sayfası köprü olarak kullanılır. Android\'de cevabı "Yeniden 104"e paylaşırsan otomatik okunur.',
+    app: 'Fotoğraf çektiğinde bu seçenek başta ve vurgulu gelir. Telefondaki Claude/ChatGPT uygulaması API değildir — abonelik ayrı faturalanır ve bir web sayfası ona doğrudan bağlanamaz; bu yüzden paylaş sayfası köprü olarak kullanılır. Android\'de cevabı "İrade"ye paylaşırsan otomatik okunur.',
     api: 'Fotoğraf çektiğinde bu seçenek başta gelir. Tek dokunuş, uygulamadan çıkmadan — anahtar aşağıda.',
     off: 'Fotoğraf çektiğinde elle giriş başta gelir. Diğer ikisi yine listede durur.'
   }[mode];
@@ -1397,7 +1397,7 @@ function doExport() {
   const blob = new Blob([Store.exportJSON()], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `yeniden104-${today()}.json`;
+  a.download = `irade-${today()}.json`;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);

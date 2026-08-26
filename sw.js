@@ -1,7 +1,7 @@
 /* Çevrimdışı önbellek + arka plan bildirimleri */
 importScripts('./js/notify-messages.js');
 
-const CACHE = 'yeniden104-v8';
+const CACHE = 'irade-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -74,7 +74,7 @@ function dayKey() {
 async function notifyNow(slot) {
   const msg = pickNotify(slot);
   // aynı slot aynı gün ikinci kez gösterilmesin
-  const tag = `yeniden104-${slot}-${dayKey()}`;
+  const tag = `irade-${slot}-${dayKey()}`;
   const existing = await self.registration.getNotifications({ tag });
   if (existing.length) return;
   return self.registration.showNotification(msg.t, {

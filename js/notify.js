@@ -91,7 +91,7 @@ const Notify = {
         body: msg.b,
         icon: 'icons/icon-192.png',
         badge: 'icons/icon-192.png',
-        tag: 'yeniden104-' + slot,
+        tag: 'irade-' + slot,
         renotify: false,
         data: { slot }
       });
@@ -109,7 +109,7 @@ const Notify = {
     const msg = pickNotify('motivasyon');
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification(msg.t, {
-      body: msg.b, icon: 'icons/icon-192.png', tag: 'yeniden104-test'
+      body: msg.b, icon: 'icons/icon-192.png', tag: 'irade-test'
     });
     return true;
   }
