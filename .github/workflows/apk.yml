@@ -1,0 +1,77 @@
+name: APK
+
+# APK'yı GitHub'ın sunucusunda derler. Bilgisayarına Java, Android SDK
+# ya da Gradle kurmana gerek yok. Bittiğinde APK, "apk-latest" sürümüne
+# yüklenir; telefondan doğrudan indirip kurabilirsin.
+
+on:
+  push:
+    branches:
+      - main
+      - claude/personal-weight-tracking-app-qgayj5
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk
+  cancel-in-progress: true
+
+jobs:
+  derle:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Web dosyalarını topla
+        run: npm run build
+
+      - name: Android projesini oluştur
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      # Debug imzası kullanılıyor: release APK imzasız çıkar ve telefona
+      # kurulamaz. Debug APK, Android'in kendi anahtarıyla imzalı olduğu
+      # için "bilinmeyen kaynak" iznini verdiğinde doğrudan kurulur.
+      - name: APK derle
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: APK'yı adlandır
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/debug/app-debug.apk dist/yeniden104.apk
+          ls -lh dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yeniden104-apk
+          path: dist/yeniden104.apk
+
+      - name: Sürüme yükle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk-latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create apk-latest dist/yeniden104.apk \
+            --title "Yeniden 104 · APK" \
+            --notes "Telefondan bu sayfayı aç, \`yeniden104.apk\` dosyasına dokun ve kur.
+
+          Uygulama içeriği https://aliteker42.github.io/afvallen/ adresinden yüklenir; siteyi güncellediğinde APK'yı tekrar kurmana gerek kalmaz.
+
+          Derleme: ${{ github.sha }}"

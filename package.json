@@ -4,6 +4,7 @@
   "description": "Kişisel kilo takip uygulaması. Tek amacı var: **can sıkıntısından yemeyi durdurmak** ve kiloyu tekrar aşağı çekmek.",
   "main": "sw.js",
   "scripts": {
+    "build": "node scripts/build-www.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
