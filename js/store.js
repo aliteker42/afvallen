@@ -17,6 +17,7 @@ const DEFAULTS = {
   weights: [],   // {d:'YYYY-MM-DD', kg:127.7}
   meals: [],     // {id, d, ts, name, kcal, protein, photo}
   boredom: [],   // {id, ts, task, outcome:'resisted'|'ate'}
+  steps: {},     // {'YYYY-MM-DD': 8432}
   apiKey: '',
   apiModel: 'claude-haiku-4-5',
   analyzeMode: 'app',   // 'app' = telefondaki Claude/ChatGPT'ye gönder, 'api' = doğrudan API, 'off' = elle
@@ -109,6 +110,18 @@ const Store = {
   },
 
   /* --- sıkıntı --- */
+  /* --- adımlar --- */
+  stepsOn(d) {
+    return this.data.steps[d || today()] || 0;
+  },
+  setSteps(n, d) {
+    const day = d || today();
+    const v = Math.max(0, Math.round(n) || 0);
+    if (v) this.data.steps[day] = v;
+    else delete this.data.steps[day];
+    this.save();
+  },
+
   addBoredom(task, outcome) {
     this.data.boredom.push({ id: uid(), ts: Date.now(), task, outcome });
     this.save();

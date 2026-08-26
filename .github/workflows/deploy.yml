@@ -8,9 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
@@ -44,6 +42,9 @@ jobs:
             console.log('Manifest, simgeler ve index.html bağlantıları tamam.');
           "
 
+      - name: Aranan elemanlar var mı
+        run: node scripts/check-ids.js
+
       - name: Service worker önbelleği eksiksiz mi
         run: |
           node -e "
@@ -61,28 +62,32 @@ jobs:
     name: GitHub Pages
     needs: kontrol
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
-      # Pages depo ayarlarından açılmamışsa bu adım düşer; iş akışını
-      # kırmızıya boyamak yerine ne yapılması gerektiğini yazıp geçiyoruz.
-      - id: pages
-        uses: actions/configure-pages@v5
-        continue-on-error: true
-
-      - name: Pages kapalı
-        if: steps.pages.outcome == 'failure'
-        run: |
-          echo "::warning title=Pages kapalı::Depo ayarlarından Settings → Pages → Source: \"GitHub Actions\" seçildiğinde bu iş akışı yayınlamaya başlar. O zamana kadar dosyalar kontrol edilip geçiliyor."
-
-      - uses: actions/upload-pages-artifact@v3
-        if: steps.pages.outcome == 'success'
+      - uses: actions/setup-node@v4
         with:
-          path: .
+          node-version: 22
 
-      - id: deploy
-        if: steps.pages.outcome == 'success'
-        uses: actions/deploy-pages@v4
+      - run: npm ci
+
+      - name: Siteyi hazirla
+        run: |
+          npm run icons
+          npm run build
+
+      # Pages bu depoda "bir daldan yayinla" olarak kurulu; Actions
+      # kaynagi secili olmadigi icin deploy-pages adimi hic calismadan
+      # dusuyordu ve site aylardir guncellenmiyordu. Bunun yerine
+      # uretilen siteyi dogrudan gh-pages dalina yaziyoruz.
+      - name: gh-pages dalina yayinla
+        run: |
+          cd www
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Yayin: ${{ github.sha }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages

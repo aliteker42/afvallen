@@ -30,7 +30,6 @@ function init() {
   registerSW();
   handleIncomingShare();
   openFromHash();
-  initStepTracking();
 }
 
 /* Claude/ChatGPT'den paylaşılan cevap uygulamaya düştüğünde */
@@ -181,6 +180,16 @@ function renderToday() {
     $('#card-gain').classList.add('hidden');
   }
 
+  // bugünün tahmini kaybı
+  $('#stat-kcal-sub').textContent = `${tot.kcal} / ${t.kcal} kcal`;
+  const gEl = $('#today-grams');
+  if (gEl) {
+    const g = todayGrams();
+    gEl.textContent = gramsText();
+    gEl.className = 'grams-text ' + (g === null ? '' : g > 0 ? 'good' : g < 0 ? 'over' : '');
+  }
+
+  renderSteps();
   renderDeen();
   $('#coach-text').textContent = Coach.pick('idle');
 }
@@ -214,121 +223,64 @@ function renderDeen() {
   $('#deen-src').textContent = d.k;
 }
 
-/* ---------------- adımlar (step tracking) ---------------- */
+/* ---------------- adımlar ----------------
+   Telefonun kendi adım sayacını bir web sayfasından okumanın yolu yok:
+   böyle bir tarayıcı API'si yok. Gerçek sayaca ulaşmak için APK'ya
+   yazılacak bir Capacitor eklentisi gerekir. O gelene kadar sayı elle
+   giriliyor — telefonundaki sağlık uygulamasından bakıp yazman yeterli. */
+
+const KCAL_PER_KG = 7700;                 // 1 kg yağ ≈ 7700 kcal
+const KCAL_PER_STEP_PER_KG = 0.00037;     // ≈ 0.047 kcal/adım (127 kg)
+
 function bindSteps() {
-  const btn = $('#btn-start-steps');
-  if (!btn) return;
-  btn.addEventListener('click', async () => {
-    if (stepsData.active) {
-      stopStepTracking();
-    } else {
-      startStepTracking();
-    }
-  });
+  const card = $('#card-steps');
+  if (card) card.addEventListener('click', askSteps);
 }
 
-async function initStepTracking() {
-  if ('Pedometer' in window && typeof Pedometer.isAvailable === 'function') {
-    try {
-      const isAvailable = await Pedometer.isAvailable();
-      if (isAvailable) {
-        renderSteps();
-        return;
-      }
-    } catch (e) {
-      console.error('Pedometer error:', e);
-    }
-  }
-  $('#stat-steps-sub').textContent = 'Kapasitör yükselt';
+function askSteps() {
+  const cur = Store.stepsOn();
+  const v = prompt('Bugün kaç adım attın?\n(Telefonundaki sağlık uygulamasından bakabilirsin)',
+                   cur ? String(cur) : '');
+  if (v === null) return;
+  const n = parseInt(String(v).replace(/[^\d]/g, ''), 10);
+  if (isNaN(n)) { toast('Sayı gir', 'bad'); return; }
+  Store.setSteps(n);
+  renderSteps();
+  renderToday();
+  toast(n ? `${n.toLocaleString('tr-TR')} adım kaydedildi` : 'Adım silindi');
 }
 
-function startStepTracking() {
-  if ('Pedometer' in window && typeof Pedometer.startTracking === 'function') {
-    startPedometerTracking();
-  } else {
-    startAccelerometerTracking();
-  }
-}
-
-function startPedometerTracking() {
-  stepsData.active = true;
-  $('#btn-start-steps').style.opacity = '1';
-  const today_date = today();
-
-  const options = { startDate: new Date(today_date + 'T00:00:00') };
-  Pedometer.startTracking(
-    (data) => {
-      stepsData.count = data.numberOfSteps;
-      stepsData.lastUpdate = new Date();
-      renderSteps();
-    },
-    (err) => {
-      console.error('Step tracking error:', err);
-      stepsData.active = false;
-      $('#btn-start-steps').style.opacity = '.6';
-      toast('Adım takibi başarısız', 'bad');
-    },
-    options
-  );
-}
-
-function startAccelerometerTracking() {
-  if (!('Accelerometer' in window)) {
-    toast('Adım sayıcı ve ivmeölçer desteklenmiyor', 'bad');
-    return;
-  }
-
-  stepsData.active = true;
-  $('#btn-start-steps').style.opacity = '1';
-  let lastShake = 0;
-
-  try {
-    const accel = new Accelerometer({ frequency: 100 });
-    accel.addEventListener('reading', () => {
-      const x = accel.x, y = accel.y, z = accel.z;
-      const acceleration = Math.sqrt(x*x + y*y + z*z);
-      const now = Date.now();
-
-      if (acceleration > 25 && now - lastShake > 500) {
-        stepsData.count++;
-        lastShake = now;
-        renderSteps();
-      }
-    });
-    accel.start();
-    stepsData.accelerometer = accel;
-  } catch (err) {
-    stepsData.active = false;
-    $('#btn-start-steps').style.opacity = '.6';
-    toast('İvmeölçer kullanılamadı', 'bad');
-  }
-}
-
-function stopStepTracking() {
-  stepsData.active = false;
-  $('#btn-start-steps').style.opacity = '.6';
-
-  if ('Pedometer' in window && typeof Pedometer.stopTracking === 'function') {
-    Pedometer.stopTracking();
-  }
-
-  if (stepsData.accelerometer) {
-    stepsData.accelerometer.stop();
-    stepsData.accelerometer = null;
-  }
+function stepKcal(steps) {
+  return Math.round(steps * KCAL_PER_STEP_PER_KG * Store.currentKg());
 }
 
 function renderSteps() {
-  const stepsEl = $('#stat-steps');
-  if (!stepsEl) return;
+  const el = $('#stat-steps');
+  if (!el) return;
+  const n = Store.stepsOn();
+  el.textContent = n ? n.toLocaleString('tr-TR') : '—';
+  $('#stat-steps-sub').textContent = n
+    ? `≈ ${stepKcal(n)} kcal yaktın`
+    : 'dokun ve gir';
+}
 
-  if (stepsData.count > 0) {
-    stepsEl.textContent = stepsData.count.toLocaleString('tr-TR');
-    $('#stat-steps-sub').textContent = 'aktif takip';
-  } else {
-    stepsEl.textContent = '—';
-    $('#stat-steps-sub').textContent = stepsData.active ? 'takip ediliyor...' : 'başlamak için tıkla';
-  }
+/* Bugünün kalori açığından tahmini kayıp.
+   Açık = günlük yakım (TDEE) − yenen. TDEE zaten hareket katsayısını
+   içerdiği için adımlar ayrıca eklenmiyor, yoksa iki kez sayılır. */
+function todayGrams() {
+  const kg = Store.currentKg();
+  const tdee = Calc.tdee(kg, Store.data.profile);
+  const eaten = Store.dayTotals().kcal;
+  if (!eaten) return null;
+  return Math.round((tdee - eaten) / KCAL_PER_KG * 1000);
+}
+
+function gramsText() {
+  const g = todayGrams();
+  if (g === null) return 'Bugün henüz bir şey eklemedin.';
+  if (g > 0) return `Bu gidişle bugün ≈ ${g} g verdin.`;
+  if (g === 0) return 'Bugün başa baş: ne verdin ne aldın.';
+  return `Bugün ≈ ${Math.abs(g)} g aldın. Yarın telafi edersin.`;
 }
 
 /* ---------------- oyun ---------------- */
@@ -743,7 +695,7 @@ function renderMeals() {
       motMsg = `Bugün yemenin fazla oldu. Tamam, hata yapılır. Tüm hafta için endişelenme. 💖`;
     }
     motCard.classList.remove('hidden');
-    $('#motivation-text').textContent = motMsg;
+    $('#motivation-text').textContent = motMsg + ' ' + gramsText();
   } else {
     motCard.classList.add('hidden');
   }

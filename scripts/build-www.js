@@ -8,7 +8,7 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const out = path.join(root, 'www');
 
-const FILES = ['index.html', 'manifest.webmanifest', 'sw.js'];
+const FILES = ['index.html', 'manifest.webmanifest', 'sw.js', '.nojekyll'];
 const DIRS = ['css', 'js', 'icons'];
 
 fs.rmSync(out, { recursive: true, force: true });
