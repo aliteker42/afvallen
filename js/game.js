@@ -166,8 +166,10 @@ const Game = {
   calendar(n) {
     n = n || 14;
     const have = new Set(Store.data.weights.map(w => w.d));
+    // Bugun solda, geriye dogru saga: seri sol uctan doluyor.
+    // Onceki sirada (eski gun solda) dolu kareler sag uca sikisiyordu.
     const out = [];
-    for (let i = n - 1; i >= 0; i--) {
+    for (let i = 0; i < n; i++) {
       const d = dateKey(new Date(Date.now() - i * 86400000));
       out.push({ d, on: have.has(d), today: d === today() });
     }
