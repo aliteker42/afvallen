@@ -251,9 +251,14 @@ function healthPlugin() {
   return null;
 }
 
+/* Android tarafi {permissions:{READ_STEPS:true}} donduruyor (duz nesne).
+   Paketin TypeScript tanimi ise dizi diyor; tanima guvenince .some()
+   patliyordu. Iki sekli de kabul ediyoruz. */
 function hasStepPermission(res) {
-  const list = (res && res.permissions) || [];
-  return list.some(p => p && p.READ_STEPS === true);
+  const p = res && res.permissions;
+  if (!p) return false;
+  if (Array.isArray(p)) return p.some(x => x && x.READ_STEPS === true);
+  return p.READ_STEPS === true;
 }
 
 /* Her aşamayı ayrı ayrı raporlar. Sessizce null dönmek yerine nerede
