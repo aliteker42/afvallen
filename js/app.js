@@ -30,6 +30,12 @@ function init() {
   registerSW();
   handleIncomingShare();
   openFromHash();
+
+  // APK'da izin daha önce verildiyse adımlar sessizce gelir
+  syncStepsFromHealth(false);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) syncStepsFromHealth(false);
+  });
 }
 
 /* Claude/ChatGPT'den paylaşılan cevap uygulamaya düştüğünde */
@@ -224,10 +230,64 @@ function renderDeen() {
 }
 
 /* ---------------- adımlar ----------------
-   Telefonun kendi adım sayacını bir web sayfasından okumanın yolu yok:
-   böyle bir tarayıcı API'si yok. Gerçek sayaca ulaşmak için APK'ya
-   yazılacak bir Capacitor eklentisi gerekir. O gelene kadar sayı elle
-   giriliyor — telefonundaki sağlık uygulamasından bakıp yazman yeterli. */
+   APK içinde adımlar Health Connect'ten okunur: Samsung Health, Google Fit
+   ve benzerleri verilerini oraya yazar. Tarayıcıda böyle bir yol yok
+   (sağlık verisine erişen bir web API'si yok), orada sayı elle girilir.
+   Eklentiye köprü üzerinden bağlanıyoruz çünkü uygulama derleyici
+   kullanmıyor; npm paketini import etmek mümkün değil. */
+
+function healthPlugin() {
+  const C = window.Capacitor;
+  if (!C || typeof C.isNativePlatform !== 'function' || !C.isNativePlatform()) return null;
+  if (typeof C.registerPlugin !== 'function') return null;
+  try { return C.registerPlugin('HealthPlugin'); } catch (e) { return null; }
+}
+
+function hasStepPermission(res) {
+  const list = (res && res.permissions) || [];
+  return list.some(p => p && p.READ_STEPS === true);
+}
+
+/* ask=false: izin varsa sessizce okur, yoksa hiç sormaz.
+   Dönen değer: adım sayısı, ya da okunamadıysa null. */
+async function readStepsFromHealth(ask) {
+  const H = healthPlugin();
+  if (!H) return null;
+  try {
+    const avail = await H.isHealthAvailable();
+    if (!avail || avail.available !== true) return null;
+
+    const req = { permissions: ['READ_STEPS'] };
+    let perm = await H.checkHealthPermissions(req);
+    if (!hasStepPermission(perm)) {
+      if (!ask) return null;
+      perm = await H.requestHealthPermissions(req);
+      if (!hasStepPermission(perm)) return null;
+    }
+
+    const d = today();
+    const r = await H.queryAggregated({
+      startDate: new Date(d + 'T00:00:00').toISOString(),
+      endDate: new Date().toISOString(),
+      dataType: 'steps',
+      bucket: 'day'
+    });
+    const total = (r && r.aggregatedData || []).reduce((a, x) => a + (Number(x.value) || 0), 0);
+    return Math.round(total);
+  } catch (e) {
+    return null;
+  }
+}
+
+/* Uygulama açıldığında ve öne geldiğinde sessizce tazele */
+async function syncStepsFromHealth(ask) {
+  const n = await readStepsFromHealth(ask);
+  if (n === null) return false;
+  Store.setSteps(n);
+  renderSteps();
+  renderToday();
+  return true;
+}
 
 const KCAL_PER_KG = 7700;                 // 1 kg yağ ≈ 7700 kcal
 const KCAL_PER_STEP_PER_KG = 0.00037;     // ≈ 0.047 kcal/adım (127 kg)
@@ -237,7 +297,13 @@ function bindSteps() {
   if (card) card.addEventListener('click', askSteps);
 }
 
-function askSteps() {
+async function askSteps() {
+  // APK'da önce Health Connect denenir; izin yoksa burada sorulur.
+  if (healthPlugin()) {
+    toast('Sağlık verisi okunuyor…');
+    if (await syncStepsFromHealth(true)) { toast('Sağlık uygulamasından alındı'); return; }
+    toast('Okunamadı, elle girebilirsin', 'bad');
+  }
   const cur = Store.stepsOn();
   const v = prompt('Bugün kaç adım attın?\n(Telefonundaki sağlık uygulamasından bakabilirsin)',
                    cur ? String(cur) : '');
@@ -261,7 +327,7 @@ function renderSteps() {
   el.textContent = n ? n.toLocaleString('tr-TR') : '—';
   $('#stat-steps-sub').textContent = n
     ? `≈ ${stepKcal(n)} kcal yaktın`
-    : 'dokun ve gir';
+    : (healthPlugin() ? 'dokun · sağlıktan oku' : 'dokun ve gir');
 }
 
 /* Bugünün kalori açığından tahmini kayıp.

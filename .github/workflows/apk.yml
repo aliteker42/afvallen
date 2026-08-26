@@ -46,6 +46,9 @@ jobs:
       - name: Android projesini oluştur
         run: |
           npx cap add android
+          # Health Connect SDK'si en az API 26 istiyor; Capacitor 24 yaziyor.
+          sed -i 's/minSdkVersion = 24/minSdkVersion = 26/' android/variables.gradle
+          grep minSdkVersion android/variables.gradle
           npx cap sync android
 
       # Launcher ikonu web manifest'inden gelmez; Android'in kendi
