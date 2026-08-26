@@ -8,7 +8,7 @@ let panicTimer = null;
 let hungerState = { i: 0, answers: [] };
 let pendingPhoto = null;
 let selectedMealDate = today(); // Seçili öğün tarihi
-let stepsData = { active: false, count: 0, lastUpdate: null };
+let stepsData = { active: false, count: 0, lastUpdate: null, accelerometer: null };
 
 /* ---------------- init ---------------- */
 function init() {
@@ -228,28 +228,29 @@ function bindSteps() {
 }
 
 async function initStepTracking() {
-  if (!('Pedometer' in window)) {
-    $('#stat-steps-sub').textContent = 'Cihaz desteklenmiyor';
-    return;
-  }
-  try {
-    const isAvailable = await Pedometer.isAvailable();
-    if (!isAvailable) {
-      $('#stat-steps-sub').textContent = 'Adım sayıcı yok';
-      return;
+  if ('Pedometer' in window && typeof Pedometer.isAvailable === 'function') {
+    try {
+      const isAvailable = await Pedometer.isAvailable();
+      if (isAvailable) {
+        renderSteps();
+        return;
+      }
+    } catch (e) {
+      console.error('Pedometer error:', e);
     }
-    startStepTracking();
-  } catch (e) {
-    $('#stat-steps-sub').textContent = 'İzin reddedildi';
   }
+  $('#stat-steps-sub').textContent = 'Kapasitör yükselt';
 }
 
 function startStepTracking() {
-  if (!('Pedometer' in window)) {
-    toast('Adım sayıcı desteklenmiyor', 'bad');
-    return;
+  if ('Pedometer' in window && typeof Pedometer.startTracking === 'function') {
+    startPedometerTracking();
+  } else {
+    startAccelerometerTracking();
   }
+}
 
+function startPedometerTracking() {
   stepsData.active = true;
   $('#btn-start-steps').style.opacity = '1';
   const today_date = today();
@@ -271,11 +272,50 @@ function startStepTracking() {
   );
 }
 
+function startAccelerometerTracking() {
+  if (!('Accelerometer' in window)) {
+    toast('Adım sayıcı ve ivmeölçer desteklenmiyor', 'bad');
+    return;
+  }
+
+  stepsData.active = true;
+  $('#btn-start-steps').style.opacity = '1';
+  let lastShake = 0;
+
+  try {
+    const accel = new Accelerometer({ frequency: 100 });
+    accel.addEventListener('reading', () => {
+      const x = accel.x, y = accel.y, z = accel.z;
+      const acceleration = Math.sqrt(x*x + y*y + z*z);
+      const now = Date.now();
+
+      if (acceleration > 25 && now - lastShake > 500) {
+        stepsData.count++;
+        lastShake = now;
+        renderSteps();
+      }
+    });
+    accel.start();
+    stepsData.accelerometer = accel;
+  } catch (err) {
+    stepsData.active = false;
+    $('#btn-start-steps').style.opacity = '.6';
+    toast('İvmeölçer kullanılamadı', 'bad');
+  }
+}
+
 function stopStepTracking() {
-  if (!('Pedometer' in window)) return;
   stepsData.active = false;
   $('#btn-start-steps').style.opacity = '.6';
-  Pedometer.stopTracking();
+
+  if ('Pedometer' in window && typeof Pedometer.stopTracking === 'function') {
+    Pedometer.stopTracking();
+  }
+
+  if (stepsData.accelerometer) {
+    stepsData.accelerometer.stop();
+    stepsData.accelerometer = null;
+  }
 }
 
 function renderSteps() {
