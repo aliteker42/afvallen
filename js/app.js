@@ -456,24 +456,51 @@ function todayGrams() {
   return todayBalance().gram;
 }
 
+/* Gun sonu tahmini: butun gunun dinlenme yakimi + su ana kadarki adim,
+   eksi hedef kalori (hedefi asmissa gercekten yedigi). Adim ilerisi
+   tahmin edilmiyor; bu yuzden rakam ihtiyatli kaliyor, gun ilerledikce
+   ve yurudukce yukseliyor. */
+function projectedBalance() {
+  const kg = Store.currentKg();
+  const p = Store.data.profile;
+  const t = Store.data.targets;
+  const steps = Store.stepsOn();
+
+  const gunlukDinlenme = Math.round(steps > 0
+    ? Calc.bmr(kg, p.heightCm, p.age, p.sex) * HAREKETSIZ
+    : Calc.tdee(kg, p));
+  const adim = steps > 0 ? stepKcal(steps) : 0;
+  const yakim = gunlukDinlenme + adim;
+
+  const yenen = Store.dayTotals().kcal;
+  const varsayilan = Math.max(t.kcal, yenen);
+  const acik = yakim - varsayilan;
+  return { yakim, varsayilan, acik, gram: Math.round(acik / KCAL_PER_KG * 1000) };
+}
+
 function renderBalance() {
   const el = $('#today-grams');
   if (!el) return;
-  const b = todayBalance();
-  const say = n => n.toLocaleString('tr-TR');
+  const say = n => Math.round(n).toLocaleString('tr-TR');
+  const b = todayBalance();     // şu ana kadar gerçekleşen
+  const t = projectedBalance(); // gün sonu tahmini
 
-  el.textContent = b.acik >= 0
-    ? `≈ ${say(b.gram)} g gitmiş olmalı`
-    : `≈ ${say(Math.abs(b.gram))} g fazla`;
-  el.className = 'grams-text ' + (b.acik > 0 ? 'good' : b.acik < 0 ? 'over' : '');
+  // Büyük rakam gün sonu tahmini: "bugün ne kadar gider" sorusunun cevabı.
+  el.textContent = t.acik >= 0
+    ? `≈ ${say(t.gram)} g gider`
+    : `≈ ${say(Math.abs(t.gram))} g gelir`;
+  el.className = 'grams-text ' + (t.acik > 0 ? 'good' : t.acik < 0 ? 'over' : '');
 
-  $('#balance-line').textContent = b.acik >= 0
-    ? `${say(b.acik)} kcal açık`
-    : `${say(Math.abs(b.acik))} kcal fazla`;
+  $('#balance-line').textContent = t.acik >= 0
+    ? `hedefinde kalırsan · ${say(t.acik)} kcal açık`
+    : `bu gidişle ${say(Math.abs(t.acik))} kcal fazla`;
 
-  const adimKismi = b.steps > 0
-    ? ` + ${say(b.steps)} adım ${say(b.adim)}`
-    : '';
+  // Şu ana kadar gerçekten olan — gün ilerledikçe üstteki rakama yaklaşır
+  $('#balance-now').textContent = b.acik >= 0
+    ? `Şu ana kadar: ${say(b.acik)} kcal açık · ≈ ${say(b.gram)} g`
+    : `Şu ana kadar: ${say(Math.abs(b.acik))} kcal fazla · ≈ ${say(Math.abs(b.gram))} g`;
+
+  const adimKismi = b.steps > 0 ? ` + ${say(b.steps)} adım ${say(b.adim)}` : '';
   $('#balance-detail').textContent =
     `Yakım ${say(b.toplam)} (dinlenme ${say(b.dinlenme)}${adimKismi}) · yenen ${say(b.yenen)}`;
 }

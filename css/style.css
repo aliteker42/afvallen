@@ -153,8 +153,10 @@ input,select,button,textarea{font-family:inherit;font-size:16px}
 .grams-text{font-size:26px;font-weight:800;line-height:1.25;color:var(--txt);letter-spacing:-.01em}
 .grams-text.good{color:var(--accent-dim)}
 .grams-text.over{color:var(--warn)}
-.balance-line{font-size:15px;font-weight:700;color:var(--txt-2);margin-top:6px}
-.balance-detail{font-size:12px;color:var(--txt-3);margin-top:6px;line-height:1.5}
+.balance-line{font-size:14px;font-weight:700;color:var(--txt-2);margin-top:6px}
+.balance-now{font-size:14px;font-weight:600;color:var(--txt);margin-top:12px;
+  padding-top:12px;border-top:1px solid var(--line)}
+.balance-detail{font-size:12px;color:var(--txt-3);margin-top:5px;line-height:1.5}
 
 .quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .qa{background:var(--card);border:1px solid var(--line);color:var(--txt);padding:14px;border-radius:var(--r);font-weight:600;font-size:14.5px}
