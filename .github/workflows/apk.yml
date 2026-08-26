@@ -51,6 +51,12 @@ jobs:
           grep minSdkVersion android/variables.gradle
           npx cap sync android
 
+      # Health Connect, manifestinde "izin gerekcesi" ekrani tanimli
+      # olmayan uygulamayi izin listesine hic almaz. Bu adim olmadan
+      # uygulama Health Connect'te gorunmuyor, izin de verilemiyordu.
+      - name: AndroidManifest'i Health Connect için yamala
+        run: node scripts/patch-android-manifest.js
+
       # Launcher ikonu web manifest'inden gelmez; Android'in kendi
       # mipmap kaynaklarindan gelir. Bu adim olmazsa APK, Capacitor'in
       # varsayilan sablon ikonuyla cikar.
