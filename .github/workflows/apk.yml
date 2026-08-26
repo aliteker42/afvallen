@@ -39,12 +39,20 @@ jobs:
         run: npm ci
 
       - name: Web dosyalarını topla
-        run: npm run build
+        run: |
+          npm run icons
+          npm run build
 
       - name: Android projesini oluştur
         run: |
           npx cap add android
           npx cap sync android
+
+      # Launcher ikonu web manifest'inden gelmez; Android'in kendi
+      # mipmap kaynaklarindan gelir. Bu adim olmazsa APK, Capacitor'in
+      # varsayilan sablon ikonuyla cikar.
+      - name: Uygulama ikonlarını üret
+        run: npx capacitor-assets generate --android
 
       # Debug imzası kullanılıyor: release APK imzasız çıkar ve telefona
       # kurulamaz. Debug APK, Android'in kendi anahtarıyla imzalı olduğu
