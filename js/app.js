@@ -314,6 +314,12 @@ async function runHealthDiag() {
   ok('Uygulama içinde (tarayıcı değil)', !!(C && typeof C.isNativePlatform === 'function' && C.isNativePlatform()));
   ok('Capacitor köprüsü', !!(C && C.Plugins));
 
+  // Hangi sürümün çalıştığı ve köprünün gerçekte ne sunduğu — bunlar
+  // olmadan "eski önbellek mi, gerçek arıza mı" ayırt edilemiyor.
+  const surum = ($('#build-stamp') && $('#build-stamp').textContent) || '?';
+  const anahtar = C ? Object.keys(C).sort().join(', ') : '(Capacitor yok)';
+  const eklenti = C && C.Plugins ? Object.keys(C.Plugins).sort().join(', ') : '(Plugins yok)';
+
   const r = await healthCheck(false);
   const asama = ['eklenti-yok', 'hc-yok', 'izin-yok', 'izin-red', 'veri-yok', 'ok', 'hata'];
   const i = asama.indexOf(r.kod);
@@ -326,6 +332,9 @@ async function runHealthDiag() {
     ? `${r.steps.toLocaleString('tr-TR')} adım okundu.`
     : (HEALTH_MESAJ[r.kod] || 'Bilinmeyen durum: ' + r.kod))}</div>`);
   if (r.ek) satir.push(`<div class="hd-ek">${escapeHtml(r.ek)}</div>`);
+  satir.push(`<div class="hd-ek">sürüm: ${escapeHtml(surum)}
+Capacitor: ${escapeHtml(anahtar)}
+Plugins: ${escapeHtml(eklenti)}</div>`);
 
   host.innerHTML = satir.join('');
 

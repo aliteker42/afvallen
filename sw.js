@@ -1,7 +1,7 @@
 /* Çevrimdışı önbellek + arka plan bildirimleri */
 importScripts('./js/notify-messages.js');
 
-const CACHE = 'irade-v11';
+const CACHE = 'irade-v12';
 const ASSETS = [
   './',
   './index.html',
@@ -42,17 +42,20 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   if (!req.url.startsWith(self.location.origin)) return;   // API çağrıları önbelleğe girmesin
 
+  /* Önce ağ, olmazsa önbellek.
+     Önce önbellek olunca güncelleme bir açılış geç geliyordu: yeni sürüm
+     arka planda indiriliyor ama ekranda hâlâ eski kod çalışıyordu.
+     Çevrimdışıyken önbellek devrede olduğu için uygulama yine açılır. */
   e.respondWith(
-    caches.match(req).then(hit => {
-      const net = fetch(req).then(res => {
+    fetch(req)
+      .then(res => {
         if (res && res.status === 200) {
           const copy = res.clone();
           caches.open(CACHE).then(c => c.put(req, copy));
         }
         return res;
-      }).catch(() => hit);
-      return hit || net;
-    })
+      })
+      .catch(() => caches.match(req))
   );
 });
 
