@@ -126,6 +126,22 @@ input,select,button,textarea{font-family:inherit;font-size:16px}
 .coach-icon{font-size:20px;line-height:1.2}
 .coach-text{font-size:14.5px;line-height:1.55}
 
+/* deen - religious messages */
+.deen{background:linear-gradient(135deg, #F0E6FF 0%, #E6F0FF 100%);border:1.5px solid #9D7FD4;padding:18px;position:relative;overflow:hidden}
+.deen::before{content:'';position:absolute;top:-50%;right:-20%;width:200px;height:200px;background:radial-gradient(circle, rgba(157,127,212,.1) 0%, transparent 70%);border-radius:99px}
+.deen-mark{font-size:28px;line-height:1;margin-bottom:12px;opacity:.8}
+.deen-text{font-size:15px;line-height:1.7;color:var(--txt);font-weight:500;margin-bottom:12px}
+.deen-src{font-size:12px;color:#9D7FD4;font-style:italic;font-weight:600}
+
+/* motivation messages */
+.motivation{background:linear-gradient(135deg, #E8F7ED 0%, #D4F5E3 100%);border:1.5px solid var(--accent);padding:16px}
+.motivation-text{font-size:14px;line-height:1.6;color:var(--txt);font-weight:500}
+
+/* steps */
+.steps-card{display:flex;justify-content:space-between;align-items:center}
+.steps-head{display:flex;justify-content:space-between;align-items:flex-start;width:100%}
+.steps-btn{background:none;border:none;font-size:28px;cursor:pointer;opacity:.6;transition:opacity .2s}
+
 .quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .qa{background:var(--card);border:1px solid var(--line);color:var(--txt);padding:14px;border-radius:var(--r);font-weight:600;font-size:14.5px}
 .qa:active{background:var(--card-2)}
@@ -177,6 +193,14 @@ input,select,button,textarea{font-family:inherit;font-size:16px}
 .h-diff.flat{color:var(--txt-3)}
 .del-btn{background:none;border:none;color:var(--txt-3);font-size:16px;padding:4px 2px}
 .empty{color:var(--txt-3);font-size:13.5px;padding:16px 0;text-align:center}
+
+/* date navigation */
+.date-nav{padding:12px}
+.date-controls{display:flex;gap:8px;margin-bottom:8px}
+.date-btn{flex:1;background:var(--bg-2);border:1px solid var(--line);color:var(--txt-2);padding:10px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.date-btn:active{background:var(--line);color:var(--txt)}
+.date-btn.date-today{background:var(--accent);color:#FFFFFF;border-color:var(--accent)}
+#meal-date-picker{font-size:14px;color:var(--txt) !important}
 
 /* meals */
 .day-summary{display:flex;justify-content:space-around;text-align:center}

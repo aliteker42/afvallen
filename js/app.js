@@ -7,6 +7,8 @@ let currentRange = 30;
 let panicTimer = null;
 let hungerState = { i: 0, answers: [] };
 let pendingPhoto = null;
+let selectedMealDate = today(); // Seçili öğün tarihi
+let stepsData = { active: false, count: 0, lastUpdate: null };
 
 /* ---------------- init ---------------- */
 function init() {
@@ -20,6 +22,7 @@ function init() {
   bindSettings();
   bindNotify();
   bindGame();
+  bindSteps();
   updatePhotoHint();
   const settled = Game.settleYesterday();
   renderAll();
@@ -27,6 +30,7 @@ function init() {
   registerSW();
   handleIncomingShare();
   openFromHash();
+  initStepTracking();
 }
 
 /* Claude/ChatGPT'den paylaşılan cevap uygulamaya düştüğünde */
@@ -90,6 +94,7 @@ function renderAll() {
   renderHistory();
   renderHealth();
   renderGame();
+  renderSteps();
 }
 
 function renderToday() {
@@ -180,6 +185,26 @@ function renderToday() {
   $('#coach-text').textContent = Coach.pick('idle');
 }
 
+function getMotivation() {
+  const kg = Store.currentKg();
+  const p = Store.data.profile;
+  const t = Store.data.targets;
+  const tot = Store.dayTotals();
+  const left = t.kcal - tot.kcal;
+  const kalan = Math.max(0, kg - p.goalWeight);
+
+  // Kalori açığına göre motivasyon
+  if (left >= t.kcal * 0.5) {
+    return `Bugün çok iyi gidişat! ${left} kcal daha var. Devam et! 💪`;
+  } else if (left > 0) {
+    return `Yaşasın! ${left} kcal bakiye kaldı. Seni yeterince iyi biliyorum, kütlemen artmayacak! 🎯`;
+  } else if (left > -300) {
+    return `Sadece ${Math.abs(left)} kcal kaçtın. Yarın daha dikkatli ol. Sorun değil! 🙌`;
+  } else {
+    return `Bugün yemenin fazla oldu. Tamam, hata yapılır. Tüm hafta için endişelenme. 💖`;
+  }
+}
+
 function renderDeen() {
   const card = $('#card-deen');
   if (!Deen.enabled()) { card.classList.add('hidden'); return; }
@@ -187,6 +212,83 @@ function renderDeen() {
   card.classList.remove('hidden');
   $('#deen-text').textContent = d.t;
   $('#deen-src').textContent = d.k;
+}
+
+/* ---------------- adımlar (step tracking) ---------------- */
+function bindSteps() {
+  const btn = $('#btn-start-steps');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    if (stepsData.active) {
+      stopStepTracking();
+    } else {
+      startStepTracking();
+    }
+  });
+}
+
+async function initStepTracking() {
+  if (!('Pedometer' in window)) {
+    $('#stat-steps-sub').textContent = 'Cihaz desteklenmiyor';
+    return;
+  }
+  try {
+    const isAvailable = await Pedometer.isAvailable();
+    if (!isAvailable) {
+      $('#stat-steps-sub').textContent = 'Adım sayıcı yok';
+      return;
+    }
+    startStepTracking();
+  } catch (e) {
+    $('#stat-steps-sub').textContent = 'İzin reddedildi';
+  }
+}
+
+function startStepTracking() {
+  if (!('Pedometer' in window)) {
+    toast('Adım sayıcı desteklenmiyor', 'bad');
+    return;
+  }
+
+  stepsData.active = true;
+  $('#btn-start-steps').style.opacity = '1';
+  const today_date = today();
+
+  const options = { startDate: new Date(today_date + 'T00:00:00') };
+  Pedometer.startTracking(
+    (data) => {
+      stepsData.count = data.numberOfSteps;
+      stepsData.lastUpdate = new Date();
+      renderSteps();
+    },
+    (err) => {
+      console.error('Step tracking error:', err);
+      stepsData.active = false;
+      $('#btn-start-steps').style.opacity = '.6';
+      toast('Adım takibi başarısız', 'bad');
+    },
+    options
+  );
+}
+
+function stopStepTracking() {
+  if (!('Pedometer' in window)) return;
+  stepsData.active = false;
+  $('#btn-start-steps').style.opacity = '.6';
+  Pedometer.stopTracking();
+}
+
+function renderSteps() {
+  const stepsEl = $('#stat-steps');
+  if (!stepsEl) return;
+
+  if (stepsData.count > 0) {
+    stepsEl.textContent = stepsData.count.toLocaleString('tr-TR');
+    $('#stat-steps-sub').textContent = 'aktif takip';
+  } else {
+    stepsEl.textContent = '—';
+    $('#stat-steps-sub').textContent = stepsData.active ? 'takip ediliyor...' : 'başlamak için tıkla';
+  }
 }
 
 /* ---------------- oyun ---------------- */
@@ -511,6 +613,31 @@ function bindMeals() {
 
   $('#photo-input').addEventListener('change', onPhoto);
 
+  // Tarih navigasyonu
+  $('#btn-prev-day').addEventListener('click', () => {
+    const d = new Date(selectedMealDate);
+    d.setDate(d.getDate() - 1);
+    selectedMealDate = d.toISOString().split('T')[0];
+    updateMealDateDisplay();
+  });
+
+  $('#btn-next-day').addEventListener('click', () => {
+    const d = new Date(selectedMealDate);
+    d.setDate(d.getDate() + 1);
+    selectedMealDate = d.toISOString().split('T')[0];
+    updateMealDateDisplay();
+  });
+
+  $('#btn-today').addEventListener('click', () => {
+    selectedMealDate = today();
+    updateMealDateDisplay();
+  });
+
+  $('#meal-date-picker').addEventListener('change', (e) => {
+    selectedMealDate = e.target.value;
+    updateMealDateDisplay();
+  });
+
   // yerel veritabanı — API'ye gitmeden kalori doldurur
   $('#food-list').innerHTML = FOOD_DB.map(f => `<option value="${escapeHtml(f.n)}">`).join('');
   $('#meal-name').addEventListener('input', () => {
@@ -534,17 +661,57 @@ function clearMealForm() {
   });
 }
 
+function updateMealDateDisplay() {
+  const picker = $('#meal-date-picker');
+  if (picker) picker.value = selectedMealDate;
+
+  const todayBtn = $('#btn-today');
+  if (todayBtn) {
+    if (selectedMealDate === today()) {
+      todayBtn.classList.add('date-today');
+    } else {
+      todayBtn.classList.remove('date-today');
+    }
+  }
+
+  renderMeals();
+}
+
 function renderMeals() {
   const t = Store.data.targets;
-  const tot = Store.dayTotals();
-  $('#yemek-date').textContent = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+  const tot = Store.dayTotals(selectedMealDate);
+  const displayDate = new Date(selectedMealDate + 'T00:00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+  const isToday = selectedMealDate === today();
+
+  $('#yemek-date').textContent = isToday ? 'Bugün' : displayDate;
   $('#ds-kcal').textContent = tot.kcal;
   $('#ds-protein').textContent = tot.protein + 'g';
   $('#ds-left').textContent = t.kcal - tot.kcal;
 
-  const list = Store.mealsOn().slice().reverse();
+  // Motivasyon mesajı göster
+  const motCard = $('#card-motivation');
+  if (isToday && tot.kcal > 0) {
+    const left = t.kcal - tot.kcal;
+    let motMsg = '';
+    if (left >= t.kcal * 0.5) {
+      motMsg = `Bugün çok iyi gidişat! ${left} kcal daha var. Devam et! 💪`;
+    } else if (left > 0) {
+      motMsg = `Yaşasın! ${left} kcal bakiye kaldı. Seni yeterince iyi biliyorum, kütlemen artmayacak! 🎯`;
+    } else if (left > -300) {
+      motMsg = `Sadece ${Math.abs(left)} kcal kaçtın. Yarın daha dikkatli ol. Sorun değil! 🙌`;
+    } else {
+      motMsg = `Bugün yemenin fazla oldu. Tamam, hata yapılır. Tüm hafta için endişelenme. 💖`;
+    }
+    motCard.classList.remove('hidden');
+    $('#motivation-text').textContent = motMsg;
+  } else {
+    motCard.classList.add('hidden');
+  }
+
+  const list = Store.mealsOn(selectedMealDate).slice().reverse();
   const host = $('#meal-list');
-  if (!list.length) { host.innerHTML = '<div class="empty">Bugün henüz bir şey eklemedin.</div>'; return; }
+  const emptyMsg = isToday ? 'Bugün henüz bir şey eklemedin.' : 'Bu günde yemek kaydı yok.';
+  if (!list.length) { host.innerHTML = `<div class="empty">${emptyMsg}</div>`; return; }
   host.innerHTML = list.map(m => `
     <div class="m-row">
       ${m.photo ? `<img class="m-thumb" src="${m.photo}" alt="">` : '<div class="m-thumb"></div>'}

@@ -92,6 +92,17 @@
       </div>
     </div>
 
+    <div class="card stat steps-card" id="card-steps">
+      <div class="steps-head">
+        <div>
+          <div class="label">Adımlar</div>
+          <div class="stat-num" id="stat-steps">—</div>
+        </div>
+        <button class="steps-btn" id="btn-start-steps" style="opacity:.6; cursor:pointer;">👟</button>
+      </div>
+      <div class="stat-sub" id="stat-steps-sub">izinleri kontrol et</div>
+    </div>
+
     <button class="panic-btn" id="btn-panic">
       <svg class="panic-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><line x1="12" y1="7" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       <span class="panic-text">CANIM SIKILIYOR</span>
@@ -211,10 +222,23 @@
       <button class="icon-btn btn-settings" aria-label="Ayarlar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m3.08-3.08l4.24-4.24"></path></svg></button>
     </header>
 
+    <div class="card date-nav">
+      <div class="date-controls">
+        <button class="date-btn" id="btn-prev-day">← Dün</button>
+        <button class="date-btn date-today" id="btn-today">Bugün</button>
+        <button class="date-btn" id="btn-next-day">Yarın →</button>
+      </div>
+      <input type="date" id="meal-date-picker" style="width:100%; padding:8px; margin-top:8px; border:1px solid var(--line); border-radius:8px;">
+    </div>
+
     <div class="card day-summary">
       <div class="ds-item"><div class="ds-num" id="ds-kcal">0</div><div class="label">kcal</div></div>
       <div class="ds-item"><div class="ds-num" id="ds-protein">0</div><div class="label">protein</div></div>
       <div class="ds-item"><div class="ds-num" id="ds-left">0</div><div class="label">kalan</div></div>
+    </div>
+
+    <div class="card motivation" id="card-motivation">
+      <div class="motivation-text" id="motivation-text">—</div>
     </div>
 
     <div class="photo-zone card">
