@@ -188,12 +188,7 @@ function renderToday() {
 
   // bugünün tahmini kaybı
   $('#stat-kcal-sub').textContent = `${tot.kcal} / ${t.kcal} kcal`;
-  const gEl = $('#today-grams');
-  if (gEl) {
-    const g = todayGrams();
-    gEl.textContent = gramsText();
-    gEl.className = 'grams-text ' + (g === null ? '' : g > 0 ? 'good' : g < 0 ? 'over' : '');
-  }
+  renderBalance();
 
   renderSteps();
   renderDeen();
@@ -375,7 +370,8 @@ async function syncStepsFromHealth(ask) {
 }
 
 const KCAL_PER_KG = 7700;                 // 1 kg yağ ≈ 7700 kcal
-const KCAL_PER_STEP_PER_KG = 0.00037;     // ≈ 0.047 kcal/adım (127 kg)
+const KCAL_PER_STEP_PER_KG = 0.00037;     // adım başına net (dinlenmenin üstü)
+const HAREKETSIZ = 1.2;                   // adım biliniyorken taban katsayı
 
 function bindSteps() {
   const card = $('#card-steps');
@@ -415,6 +411,27 @@ function stepKcal(steps) {
   return Math.round(steps * KCAL_PER_STEP_PER_KG * Store.currentKg());
 }
 
+/* Günün şu ana kadarki yakımı.
+   Adım biliniyorsa taban hareketsiz katsayıya (1.2) çekilip gerçek adım
+   eklenir; TDEE'nin kendi hareket katsayısı (1.375) kullanılsaydı hareket
+   iki kez sayılırdı. Dinlenme yakımı geçen saate göre orantılanır, yoksa
+   günün başında bütün günün yakımı açık gibi görünürdü. */
+function burnSoFar() {
+  const kg = Store.currentKg();
+  const p = Store.data.profile;
+  const steps = Store.stepsOn();
+  const n = new Date();
+  const gecenGun = Math.min(1, Math.max(0.02, (n.getHours() * 60 + n.getMinutes()) / 1440));
+
+  const gunlukDinlenme = steps > 0
+    ? Calc.bmr(kg, p.heightCm, p.age, p.sex) * HAREKETSIZ
+    : Calc.tdee(kg, p);
+
+  const dinlenme = Math.round(gunlukDinlenme * gecenGun);
+  const adim = steps > 0 ? stepKcal(steps) : 0;
+  return { dinlenme, adim, steps, toplam: dinlenme + adim, oran: gecenGun };
+}
+
 function renderSteps() {
   const el = $('#stat-steps');
   if (!el) return;
@@ -428,20 +445,37 @@ function renderSteps() {
 /* Bugünün kalori açığından tahmini kayıp.
    Açık = günlük yakım (TDEE) − yenen. TDEE zaten hareket katsayısını
    içerdiği için adımlar ayrıca eklenmiyor, yoksa iki kez sayılır. */
-function todayGrams() {
-  const kg = Store.currentKg();
-  const tdee = Calc.tdee(kg, Store.data.profile);
-  const eaten = Store.dayTotals().kcal;
-  if (!eaten) return null;
-  return Math.round((tdee - eaten) / KCAL_PER_KG * 1000);
+function todayBalance() {
+  const b = burnSoFar();
+  const yenen = Store.dayTotals().kcal;
+  const acik = b.toplam - yenen;
+  return { ...b, yenen, acik, gram: Math.round(acik / KCAL_PER_KG * 1000) };
 }
 
-function gramsText() {
-  const g = todayGrams();
-  if (g === null) return 'Bugün henüz bir şey eklemedin.';
-  if (g > 0) return `Bu gidişle bugün ≈ ${g} g verdin.`;
-  if (g === 0) return 'Bugün başa baş: ne verdin ne aldın.';
-  return `Bugün ≈ ${Math.abs(g)} g aldın. Yarın telafi edersin.`;
+function todayGrams() {
+  return todayBalance().gram;
+}
+
+function renderBalance() {
+  const el = $('#today-grams');
+  if (!el) return;
+  const b = todayBalance();
+  const say = n => n.toLocaleString('tr-TR');
+
+  el.textContent = b.acik >= 0
+    ? `≈ ${say(b.gram)} g gitmiş olmalı`
+    : `≈ ${say(Math.abs(b.gram))} g fazla`;
+  el.className = 'grams-text ' + (b.acik > 0 ? 'good' : b.acik < 0 ? 'over' : '');
+
+  $('#balance-line').textContent = b.acik >= 0
+    ? `${say(b.acik)} kcal açık`
+    : `${say(Math.abs(b.acik))} kcal fazla`;
+
+  const adimKismi = b.steps > 0
+    ? ` + ${say(b.steps)} adım ${say(b.adim)}`
+    : '';
+  $('#balance-detail').textContent =
+    `Yakım ${say(b.toplam)} (dinlenme ${say(b.dinlenme)}${adimKismi}) · yenen ${say(b.yenen)}`;
 }
 
 /* ---------------- oyun ---------------- */
@@ -856,7 +890,11 @@ function renderMeals() {
       motMsg = `Bugün yemenin fazla oldu. Tamam, hata yapılır. Tüm hafta için endişelenme. 💖`;
     }
     motCard.classList.remove('hidden');
-    $('#motivation-text').textContent = motMsg + ' ' + gramsText();
+    const b = todayBalance();
+    const ek = b.acik >= 0
+      ? ` Bugün ${b.acik.toLocaleString('tr-TR')} kcal açık — ≈ ${b.gram} g gitmiş olmalı.`
+      : ` Bugün ${Math.abs(b.acik).toLocaleString('tr-TR')} kcal fazla.`;
+    $('#motivation-text').textContent = motMsg + ek;
   } else {
     motCard.classList.add('hidden');
   }
