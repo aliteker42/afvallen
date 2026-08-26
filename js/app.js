@@ -236,11 +236,19 @@ function renderDeen() {
    Eklentiye köprü üzerinden bağlanıyoruz çünkü uygulama derleyici
    kullanmıyor; npm paketini import etmek mümkün değil. */
 
+/* Native köprü eklentileri Capacitor.Plugins altında sunar; bunları
+   JSExport.getPluginJS sayfaya doğrudan enjekte eder. registerPlugin
+   ise @capacitor/core npm paketinden gelir ve bu uygulama derleyici
+   kullanmadığı için yüklü değildir — önce Plugins'e bakılmalı. */
 function healthPlugin() {
   const C = window.Capacitor;
   if (!C || typeof C.isNativePlatform !== 'function' || !C.isNativePlatform()) return null;
-  if (typeof C.registerPlugin !== 'function') return null;
-  try { return C.registerPlugin('HealthPlugin'); } catch (e) { return null; }
+  const P = C.Plugins && C.Plugins.HealthPlugin;
+  if (P) return P;
+  if (typeof C.registerPlugin === 'function') {
+    try { return C.registerPlugin('HealthPlugin'); } catch (e) {}
+  }
+  return null;
 }
 
 function hasStepPermission(res) {
@@ -254,11 +262,14 @@ async function healthCheck(ask) {
   const C = window.Capacitor;
   if (!C) return { kod: 'tarayici' };
   if (typeof C.isNativePlatform !== 'function' || !C.isNativePlatform()) return { kod: 'tarayici' };
-  if (typeof C.registerPlugin !== 'function') return { kod: 'kopru-eksik' };
+  if (!C.Plugins) return { kod: 'kopru-eksik' };
 
-  let H;
-  try { H = C.registerPlugin('HealthPlugin'); } catch (e) { return { kod: 'eklenti-yok', ek: e.message }; }
-  if (!H || typeof H.isHealthAvailable !== 'function') return { kod: 'eklenti-yok' };
+  const H = healthPlugin();
+  if (!H || typeof H.isHealthAvailable !== 'function') {
+    // Hangi eklentilerin geldiğini yaz: eksikse burada görünür
+    const varolan = Object.keys(C.Plugins || {}).join(', ') || 'hiç yok';
+    return { kod: 'eklenti-yok', ek: 'yüklü eklentiler: ' + varolan };
+  }
 
   let avail;
   try { avail = await H.isHealthAvailable(); }
@@ -301,7 +312,7 @@ async function runHealthDiag() {
   const ok = (t, v) => satir.push(`<div class="hd-row ${v ? 'ok' : 'no'}"><span>${v ? '✓' : '✗'}</span>${escapeHtml(t)}</div>`);
 
   ok('Uygulama içinde (tarayıcı değil)', !!(C && typeof C.isNativePlatform === 'function' && C.isNativePlatform()));
-  ok('Capacitor köprüsü', !!(C && typeof C.registerPlugin === 'function'));
+  ok('Capacitor köprüsü', !!(C && C.Plugins));
 
   const r = await healthCheck(false);
   const asama = ['eklenti-yok', 'hc-yok', 'izin-yok', 'izin-red', 'veri-yok', 'ok', 'hata'];
