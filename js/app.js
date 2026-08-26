@@ -248,45 +248,105 @@ function hasStepPermission(res) {
   return list.some(p => p && p.READ_STEPS === true);
 }
 
-/* ask=false: izin varsa sessizce okur, yoksa hiç sormaz.
-   Dönen değer: adım sayısı, ya da okunamadıysa null. */
-async function readStepsFromHealth(ask) {
-  const H = healthPlugin();
-  if (!H) return null;
+/* Her aşamayı ayrı ayrı raporlar. Sessizce null dönmek yerine nerede
+   takıldığını söyler; "gelmedi" demek yerine sebebini gösterebilelim. */
+async function healthCheck(ask) {
+  const C = window.Capacitor;
+  if (!C) return { kod: 'tarayici' };
+  if (typeof C.isNativePlatform !== 'function' || !C.isNativePlatform()) return { kod: 'tarayici' };
+  if (typeof C.registerPlugin !== 'function') return { kod: 'kopru-eksik' };
+
+  let H;
+  try { H = C.registerPlugin('HealthPlugin'); } catch (e) { return { kod: 'eklenti-yok', ek: e.message }; }
+  if (!H || typeof H.isHealthAvailable !== 'function') return { kod: 'eklenti-yok' };
+
+  let avail;
+  try { avail = await H.isHealthAvailable(); }
+  catch (e) { return { kod: 'hata', ek: 'isHealthAvailable: ' + e.message, H }; }
+  if (!avail || avail.available !== true) return { kod: 'hc-yok', H };
+
+  const req = { permissions: ['READ_STEPS'] };
+  let perm;
   try {
-    const avail = await H.isHealthAvailable();
-    if (!avail || avail.available !== true) return null;
+    perm = await H.checkHealthPermissions(req);
+    if (!hasStepPermission(perm) && ask) perm = await H.requestHealthPermissions(req);
+  } catch (e) { return { kod: 'hata', ek: 'izin: ' + e.message, H }; }
+  if (!hasStepPermission(perm)) return { kod: ask ? 'izin-red' : 'izin-yok', H };
 
-    const req = { permissions: ['READ_STEPS'] };
-    let perm = await H.checkHealthPermissions(req);
-    if (!hasStepPermission(perm)) {
-      if (!ask) return null;
-      perm = await H.requestHealthPermissions(req);
-      if (!hasStepPermission(perm)) return null;
-    }
-
-    const d = today();
-    const r = await H.queryAggregated({
+  const d = today();
+  let r;
+  try {
+    r = await H.queryAggregated({
       startDate: new Date(d + 'T00:00:00').toISOString(),
       endDate: new Date().toISOString(),
       dataType: 'steps',
       bucket: 'day'
     });
-    const total = (r && r.aggregatedData || []).reduce((a, x) => a + (Number(x.value) || 0), 0);
-    return Math.round(total);
-  } catch (e) {
-    return null;
+  } catch (e) { return { kod: 'hata', ek: 'sorgu: ' + e.message, H }; }
+
+  const kayit = (r && r.aggregatedData) || [];
+  const toplam = Math.round(kayit.reduce((a, x) => a + (Number(x.value) || 0), 0));
+  if (!kayit.length || toplam === 0) return { kod: 'veri-yok', H };
+  return { kod: 'ok', steps: toplam, H };
+}
+
+/* Ayarlardaki sınama: her aşamayı tek tek yazar */
+async function runHealthDiag() {
+  const host = $('#health-diag');
+  host.classList.remove('hidden');
+  host.innerHTML = '<div class="hd-row">Sınanıyor…</div>';
+
+  const C = window.Capacitor;
+  const satir = [];
+  const ok = (t, v) => satir.push(`<div class="hd-row ${v ? 'ok' : 'no'}"><span>${v ? '✓' : '✗'}</span>${escapeHtml(t)}</div>`);
+
+  ok('Uygulama içinde (tarayıcı değil)', !!(C && typeof C.isNativePlatform === 'function' && C.isNativePlatform()));
+  ok('Capacitor köprüsü', !!(C && typeof C.registerPlugin === 'function'));
+
+  const r = await healthCheck(false);
+  const asama = ['eklenti-yok', 'hc-yok', 'izin-yok', 'izin-red', 'veri-yok', 'ok', 'hata'];
+  const i = asama.indexOf(r.kod);
+  ok('Sağlık eklentisi yüklü', i > 0);
+  ok('Health Connect kurulu', i > 1);
+  ok('Adım izni verilmiş', ['veri-yok', 'ok'].includes(r.kod));
+  ok('Bugün için veri var', r.kod === 'ok');
+
+  satir.push(`<div class="hd-sonuc">${escapeHtml(r.kod === 'ok'
+    ? `${r.steps.toLocaleString('tr-TR')} adım okundu.`
+    : (HEALTH_MESAJ[r.kod] || 'Bilinmeyen durum: ' + r.kod))}</div>`);
+  if (r.ek) satir.push(`<div class="hd-ek">${escapeHtml(r.ek)}</div>`);
+
+  host.innerHTML = satir.join('');
+
+  if (r.H && r.H.openHealthConnectSettings && r.kod !== 'ok' && r.kod !== 'tarayici') {
+    const b = document.createElement('button');
+    b.className = 'secondary-btn';
+    b.style.marginTop = '10px';
+    b.textContent = 'Health Connect ayarlarını aç';
+    b.addEventListener('click', () => r.H.openHealthConnectSettings().catch(() => toast('Açılamadı', 'bad')));
+    host.appendChild(b);
   }
 }
 
+const HEALTH_MESAJ = {
+  'tarayici':    'Tarayıcıdasın. Adımları sağlık uygulamasından okumak sadece kurulu uygulamada çalışır.',
+  'kopru-eksik': 'Uygulama köprüsü yüklenmemiş. Uygulamayı tamamen kapatıp yeniden aç.',
+  'eklenti-yok': 'Sağlık eklentisi bulunamadı. Eski bir sürüm kurulu olabilir; APK\'yı yeniden kur.',
+  'hc-yok':      'Health Connect bulunamadı. Android 14 altındaysan Play Store\'dan "Health Connect" uygulamasını kur.',
+  'izin-yok':    'Adım izni verilmemiş. Karta dokunup izin ver.',
+  'izin-red':    'İzin verilmedi. Health Connect ayarlarından İrade\'ye adım izni verebilirsin.',
+  'veri-yok':    'İzin var ama bugün için adım verisi yok. Samsung Health / Google Fit\'in Health Connect\'e yazdığından emin ol.',
+  'hata':        'Okuma sırasında hata oldu.'
+};
+
 /* Uygulama açıldığında ve öne geldiğinde sessizce tazele */
 async function syncStepsFromHealth(ask) {
-  const n = await readStepsFromHealth(ask);
-  if (n === null) return false;
-  Store.setSteps(n);
+  const r = await healthCheck(ask);
+  if (r.kod !== 'ok') return r;
+  Store.setSteps(r.steps);
   renderSteps();
   renderToday();
-  return true;
+  return r;
 }
 
 const KCAL_PER_KG = 7700;                 // 1 kg yağ ≈ 7700 kcal
@@ -301,8 +361,18 @@ async function askSteps() {
   // APK'da önce Health Connect denenir; izin yoksa burada sorulur.
   if (healthPlugin()) {
     toast('Sağlık verisi okunuyor…');
-    if (await syncStepsFromHealth(true)) { toast('Sağlık uygulamasından alındı'); return; }
-    toast('Okunamadı, elle girebilirsin', 'bad');
+    const r = await syncStepsFromHealth(true);
+    if (r.kod === 'ok') { toast(`${r.steps.toLocaleString('tr-TR')} adım alındı`, 'win'); return; }
+
+    const mesaj = (HEALTH_MESAJ[r.kod] || 'Okunamadı.') + (r.ek ? '\n\n(' + r.ek + ')' : '');
+    // Health Connect ayarlarini acabiliyorsak teklif et
+    if ((r.kod === 'izin-red' || r.kod === 'veri-yok') && r.H && r.H.openHealthConnectSettings) {
+      if (confirm(mesaj + '\n\nHealth Connect ayarlarını açayım mı?')) {
+        try { await r.H.openHealthConnectSettings(); return; } catch (e) {}
+      }
+    } else {
+      alert(mesaj);
+    }
   }
   const cur = Store.stepsOn();
   const v = prompt('Bugün kaç adım attın?\n(Telefonundaki sağlık uygulamasından bakabilirsin)',
@@ -1359,6 +1429,7 @@ function bindSettings() {
 
   $('#deen-list-btn').addEventListener('click', showDeenList);
 
+  $('#btn-health-test').addEventListener('click', runHealthDiag);
   $('#btn-export').addEventListener('click', doExport);
   $('#import-input').addEventListener('change', doImport);
   $('#btn-reset').addEventListener('click', () => {
