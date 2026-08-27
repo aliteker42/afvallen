@@ -16,27 +16,24 @@ jobs:
   ara:
     runs-on: ubuntu-latest
     steps:
-      - name: Aday adresleri dene
+      - name: IGMG city.php ve gebedstijden
         run: |
-          for u in \
-            "https://www.igmg.org/" \
-            "https://www.igmg.org/namaz-vakitleri/" \
-            "https://namazvakti.igmg.org/" \
-            "https://vakit.igmg.org/" \
-            "https://www.igmg.org/nl/" \
-            "https://www.igmg.nl/" \
-            "https://milligorus.nl/"
-          do
-            code=$(curl -sSL -m 25 -o /tmp/p.html -w "%{http_code}" "$u" 2>/dev/null || echo "000")
-            size=$(wc -c < /tmp/p.html 2>/dev/null || echo 0)
-            title=$(grep -oiP '(?<=<title>)[^<]{0,120}' /tmp/p.html 2>/dev/null | head -1)
-            echo "=== $u  ->  HTTP $code  ${size}B"
-            [ -n "$title" ] && echo "    baslik: $title"
-            # sayfada namaz/vakit gecen baglantilar
-            grep -oiE 'href="[^"]{0,160}(namaz|vakit|gebed|prayer)[^"]{0,160}"' /tmp/p.html 2>/dev/null \
-              | sort -u | head -8 | sed 's/^/    bag: /'
-            # JSON/API izleri
-            grep -oiE '(https?:)?//[a-z0-9.-]+/[^"'"'"' ]{0,120}(api|json|vakit|prayer)[^"'"'"' ]{0,80}' /tmp/p.html 2>/dev/null \
-              | sort -u | head -6 | sed 's/^/    api?: /'
-            echo
+          echo "############ 1) igmg.org city.php ############"
+          for c in Soest soest Amersfoort Utrecht; do
+            echo "--- city=$c"
+            curl -sSL -m 25 "https://www.igmg.org/wp-content/plugins/prayer-times/city.php/?city=$c" \
+              -H 'User-Agent: Mozilla/5.0' | head -c 1200
+            echo; echo
           done
+
+          echo "############ 2) milligorus.nl/islam/gebedstijden ############"
+          curl -sSL -m 25 -o /tmp/g.html "https://milligorus.nl/islam/gebedstijden" -H 'User-Agent: Mozilla/5.0'
+          echo "boyut: $(wc -c < /tmp/g.html)"
+          echo "--- sehir secenekleri:"
+          grep -oiE '<option[^>]*>[^<]{0,40}</option>' /tmp/g.html | head -25
+          echo "--- Soest gecen satirlar:"
+          grep -oiE '.{80}soest.{80}' /tmp/g.html | head -5
+          echo "--- saat gibi gorunen ilk esles:"
+          grep -oE '[0-2][0-9]:[0-5][0-9]' /tmp/g.html | head -20
+          echo "--- iframe/script kaynaklari:"
+          grep -oiE '(iframe|script)[^>]*src="[^"]+"' /tmp/g.html | head -12
