@@ -26,6 +26,7 @@
     "@capacitor/core": "^8.5.0"
   },
   "dependencies": {
+    "@capacitor/local-notifications": "^8.3.1",
     "capacitor-health": "^8.2.0"
   }
 }

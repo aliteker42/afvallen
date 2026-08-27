@@ -18,6 +18,7 @@ const DEFAULTS = {
   meals: [],     // {id, d, ts, name, kcal, protein, photo}
   boredom: [],   // {id, ts, task, outcome:'resisted'|'ate'}
   steps: {},     // {'YYYY-MM-DD': 8432}
+  reminders: [], // {id, nid, t, days:[0-6], time:'10:00', on, doneOn}
   apiKey: '',
   apiModel: 'claude-haiku-4-5',
   analyzeMode: 'app',   // 'app' = telefondaki Claude/ChatGPT'ye gönder, 'api' = doğrudan API, 'off' = elle

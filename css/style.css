@@ -573,3 +573,39 @@ body{
 .hd-row.no{color:var(--warn)}
 .hd-sonuc{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13.5px;line-height:1.55;color:var(--txt);font-weight:600}
 .hd-ek{margin-top:6px;font-size:11.5px;color:var(--txt-3);font-family:ui-monospace,monospace;word-break:break-all}
+
+/* ---------------- hatırlatıcılar ---------------- */
+.todo-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.todo{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font:inherit;
+  background:var(--card-2);border:1px solid var(--line);color:var(--txt);
+  border-radius:12px;padding:12px;cursor:pointer;transition:background .15s,border-color .15s}
+.todo:active{transform:scale(.98)}
+.todo.done{background:var(--accent-light);border-color:var(--accent);opacity:.9}
+.todo-box{width:22px;height:22px;flex:0 0 auto;border-radius:7px;background:var(--bg-2);
+  border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800}
+.todo.done .todo-box{background:var(--accent);border-color:var(--accent);color:#FFF}
+.todo-t{flex:1;font-size:14px;font-weight:600}
+.todo.done .todo-t{color:var(--txt-2);text-decoration:line-through}
+.todo-time{font-size:12px;font-weight:700;color:var(--txt-2);font-variant-numeric:tabular-nums}
+
+.rem-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.rem{display:flex;align-items:center;gap:10px;background:var(--card-2);
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.rem.off{opacity:.5}
+.rem-toggle{background:none;border:none;font-size:18px;cursor:pointer;line-height:1;flex:0 0 auto;padding:2px}
+.rem-body{flex:1;min-width:0}
+.rem-t{font-size:14px;font-weight:600;line-height:1.35}
+.rem-meta{font-size:11.5px;color:var(--txt-2);margin-top:2px}
+
+.rem-form{display:flex;flex-direction:column;gap:10px}
+.rem-form input[type=text]{width:100%;background:var(--card-2);border:1px solid var(--line);
+  border-radius:10px;padding:11px 12px;color:var(--txt)}
+.rem-row{display:flex;gap:10px;align-items:center}
+.rem-row input[type=time]{flex:1;background:var(--card-2);border:1px solid var(--line);
+  border-radius:10px;padding:10px 12px;color:var(--txt)}
+.day-picker{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.day-chip{background:var(--card-2);border:1px solid var(--line);color:var(--txt-2);
+  border-radius:9px;padding:9px 0;font-size:12px;font-weight:700;cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s}
+.day-chip.on{background:var(--accent);border-color:var(--accent);color:#FFF}

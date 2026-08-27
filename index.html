@@ -148,6 +148,14 @@
       <div class="coach-text" id="coach-text">—</div>
     </div>
 
+    <div class="card hidden" id="card-todo">
+      <div class="chart-head">
+        <div class="label">Bugün yapılacaklar</div>
+        <div class="quest-count" id="todo-count">0/0</div>
+      </div>
+      <div id="todo-list" class="todo-list"></div>
+    </div>
+
     <div class="card quests">
       <div class="chart-head">
         <div class="label">Günün görevleri</div>
@@ -448,6 +456,20 @@
     </div>
 
     <div class="card">
+      <div class="label">Hatırlatıcılar</div>
+      <div id="rem-list" class="rem-list"></div>
+      <div class="rem-form">
+        <input type="text" id="rem-text" placeholder="Ne yapmam gerek? (ör. Temizlik yap)" maxlength="80">
+        <div class="day-picker" id="rem-days"></div>
+        <div class="rem-row">
+          <input type="time" id="rem-time" value="10:00">
+          <button class="primary-btn small" id="btn-rem-add">Ekle</button>
+        </div>
+      </div>
+      <div class="hint" id="rem-hint">—</div>
+    </div>
+
+    <div class="card">
       <div class="label">Adım bağlantısı</div>
       <button class="secondary-btn" id="btn-health-test">Sağlık bağlantısını sına</button>
       <div id="health-diag" class="health-diag hidden"></div>
@@ -535,6 +557,7 @@
 <script src="js/notify.js"></script>
 <script src="js/deen.js"></script>
 <script src="js/game.js"></script>
+<script src="js/reminders.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

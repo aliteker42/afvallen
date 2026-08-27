@@ -23,6 +23,7 @@ function init() {
   bindNotify();
   bindGame();
   bindSteps();
+  bindReminders();
   updatePhotoHint();
   const settled = Game.settleYesterday();
   renderAll();
@@ -33,6 +34,7 @@ function init() {
 
   // APK'da izin daha önce verildiyse adımlar sessizce gelir
   syncStepsFromHealth(false);
+  Reminders.sync(false);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) syncStepsFromHealth(false);
   });
@@ -86,7 +88,7 @@ function go(name) {
   if (name === 'yemek') renderMeals();
   if (name === 'sikinti') { renderBoredom(); renderBoss(); renderBadges(); }
   if (name === 'saglik') renderHealth();
-  if (name === 'ayarlar') fillSettings();
+  if (name === 'ayarlar') { fillSettings(); renderReminders(); }
 }
 
 /* ---------------- render ---------------- */
@@ -100,6 +102,7 @@ function renderAll() {
   renderHealth();
   renderGame();
   renderSteps();
+  renderTodo();
 }
 
 function renderToday() {
@@ -191,6 +194,7 @@ function renderToday() {
   renderBalance();
 
   renderSteps();
+  renderTodo();
   renderDeen();
   $('#coach-text').textContent = Coach.pick('idle');
 }
@@ -507,6 +511,111 @@ function renderBalance() {
   const adimKismi = b.steps > 0 ? ` + ${say(b.steps)} adım ${say(b.adim)}` : '';
   $('#balance-detail').textContent =
     `Yakım ${say(b.toplam)} (dinlenme ${say(b.dinlenme)}${adimKismi}) · yenen ${say(b.yenen)}`;
+}
+
+/* ---------------- hatırlatıcılar ---------------- */
+function renderTodo() {
+  const card = $('#card-todo');
+  if (!card) return;
+  const liste = Reminders.today();
+  if (!liste.length) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+
+  const biten = liste.filter(r => Reminders.isDone(r)).length;
+  $('#todo-count').textContent = `${biten}/${liste.length}`;
+  $('#todo-list').innerHTML = liste
+    .slice()
+    .sort((a, b) => a.time.localeCompare(b.time))
+    .map(r => `
+      <button class="todo ${Reminders.isDone(r) ? 'done' : ''}" data-todo="${r.id}">
+        <span class="todo-box">${Reminders.isDone(r) ? '✓' : ''}</span>
+        <span class="todo-t">${escapeHtml(r.t)}</span>
+        <span class="todo-time">${r.time}</span>
+      </button>`).join('');
+
+  $('#todo-list').querySelectorAll('[data-todo]').forEach(b => {
+    b.addEventListener('click', () => {
+      Reminders.toggleDone(b.dataset.todo);
+      renderTodo();
+      vibrate(20);
+    });
+  });
+}
+
+/* Ayarlardaki hatırlatıcı yönetimi */
+let remSecilenGunler = [];
+
+function bindReminders() {
+  const gunHost = $('#rem-days');
+  gunHost.innerHTML = GUNLER.map(g =>
+    `<button class="day-chip" data-day="${g.i}" title="${g.u}">${g.k}</button>`).join('');
+  gunHost.addEventListener('click', e => {
+    const b = e.target.closest('[data-day]');
+    if (!b) return;
+    const d = +b.dataset.day;
+    remSecilenGunler = remSecilenGunler.includes(d)
+      ? remSecilenGunler.filter(x => x !== d)
+      : remSecilenGunler.concat(d);
+    b.classList.toggle('on');
+  });
+
+  $('#btn-rem-add').addEventListener('click', async () => {
+    const t = $('#rem-text').value.trim();
+    if (!t) { toast('Ne yapman gerektiğini yaz', 'bad'); return; }
+    const r = Reminders.add({ t, days: remSecilenGunler, time: $('#rem-time').value });
+    if (!r) { toast('Eklenemedi', 'bad'); return; }
+
+    $('#rem-text').value = '';
+    remSecilenGunler = [];
+    $('#rem-days').querySelectorAll('.day-chip').forEach(c => c.classList.remove('on'));
+    renderReminders(); renderTodo();
+
+    // İlk hatırlatıcıda bildirim izni burada isteniyor
+    const s = await Reminders.sync(true);
+    toast(s.kod === 'ok' ? 'Eklendi, hatırlatma kuruldu' : 'Eklendi', 'win');
+    renderReminders();
+  });
+}
+
+function renderReminders() {
+  const host = $('#rem-list');
+  if (!host) return;
+  const liste = Reminders.all();
+
+  host.innerHTML = liste.length
+    ? liste.map(r => `
+        <div class="rem ${r.on ? '' : 'off'}">
+          <button class="rem-toggle" data-rem-on="${r.id}">${r.on ? '🔔' : '🔕'}</button>
+          <div class="rem-body">
+            <div class="rem-t">${escapeHtml(r.t)}</div>
+            <div class="rem-meta">${escapeHtml(Reminders.gunAdi(r.days))} · ${r.time}</div>
+          </div>
+          <button class="del-btn" data-rem-del="${r.id}" aria-label="Sil">×</button>
+        </div>`).join('')
+    : '<div class="empty">Henüz hatırlatıcı yok.</div>';
+
+  host.querySelectorAll('[data-rem-del]').forEach(b => b.addEventListener('click', async () => {
+    Reminders.remove(b.dataset.remDel);
+    renderReminders(); renderTodo();
+    await Reminders.sync();
+    toast('Silindi');
+  }));
+  host.querySelectorAll('[data-rem-on]').forEach(b => b.addEventListener('click', async () => {
+    const r = Reminders.all().find(x => x.id === b.dataset.remOn);
+    Reminders.update(r.id, { on: !r.on });
+    renderReminders(); renderTodo();
+    await Reminders.sync();
+  }));
+
+  // Hangi yolla hatırlatıldığını açıkça yaz
+  const h = $('#rem-hint');
+  if (Reminders.plugin()) {
+    h.textContent = liste.length
+      ? 'Hatırlatmalar telefonun kendi zamanlayıcısına kurulu; uygulama kapalıyken de gelir.'
+      : 'Ekle dediğinde telefonun zamanlayıcısına kurulur, uygulama kapalıyken de gelir.';
+  } else {
+    h.textContent = 'Tarayıcıda hatırlatma ancak uygulama açıkken çalışır. Kurulu uygulamada telefonun kendi zamanlayıcısı kullanılır.';
+  }
 }
 
 /* ---------------- oyun ---------------- */
