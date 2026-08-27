@@ -217,6 +217,10 @@ function getMotivation() {
 
 function renderDeen() {
   const card = $('#card-deen');
+  if (!card.dataset.bound) {
+    card.dataset.bound = '1';
+    card.addEventListener('click', showDeenList);
+  }
   if (!Deen.enabled()) { card.classList.add('hidden'); return; }
   const d = Deen.ofTheDay();
   card.classList.remove('hidden');
