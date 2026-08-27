@@ -16,24 +16,24 @@ jobs:
   ara:
     runs-on: ubuntu-latest
     steps:
-      - name: IGMG city.php ve gebedstijden
+      - name: Vakit aracini soek
         run: |
-          echo "############ 1) igmg.org city.php ############"
-          for c in Soest soest Amersfoort Utrecht; do
-            echo "--- city=$c"
-            curl -sSL -m 25 "https://www.igmg.org/wp-content/plugins/prayer-times/city.php/?city=$c" \
-              -H 'User-Agent: Mozilla/5.0' | head -c 1200
-            echo; echo
+          curl -sSL -m 25 -o /tmp/h.html "https://www.igmg.org/" -H 'User-Agent: Mozilla/5.0'
+
+          echo "### prayer-times eklentisinin dosyalari:"
+          grep -oiE 'https://www\.igmg\.org/wp-content/plugins/prayer-times/[^"'"'"' )]+' /tmp/h.html | sort -u
+
+          echo; echo "### sayfadaki vakit blogu (prayer gecen 400 karakter):"
+          grep -oiE '.{200}prayer-times.{400}' /tmp/h.html | head -3
+
+          echo; echo "### eklentinin JS dosyalari:"
+          for j in $(grep -oiE 'https://www\.igmg\.org/wp-content/plugins/prayer-times/[^"'"'"' )]+\.js' /tmp/h.html | sort -u); do
+            echo "--- $j"
+            curl -sSL -m 20 "$j" -H 'User-Agent: Mozilla/5.0' | head -c 2000
+            echo
           done
 
-          echo "############ 2) milligorus.nl/islam/gebedstijden ############"
-          curl -sSL -m 25 -o /tmp/g.html "https://milligorus.nl/islam/gebedstijden" -H 'User-Agent: Mozilla/5.0'
-          echo "boyut: $(wc -c < /tmp/g.html)"
-          echo "--- sehir secenekleri:"
-          grep -oiE '<option[^>]*>[^<]{0,40}</option>' /tmp/g.html | head -25
-          echo "--- Soest gecen satirlar:"
-          grep -oiE '.{80}soest.{80}' /tmp/g.html | head -5
-          echo "--- saat gibi gorunen ilk esles:"
-          grep -oE '[0-2][0-9]:[0-5][0-9]' /tmp/g.html | head -20
-          echo "--- iframe/script kaynaklari:"
-          grep -oiE '(iframe|script)[^>]*src="[^"]+"' /tmp/g.html | head -12
+          echo; echo "### city.php dogrudan (slash olmadan):"
+          curl -sSL -m 20 "https://www.igmg.org/wp-content/plugins/prayer-times/city.php?city=Soest" -H 'User-Agent: Mozilla/5.0' | head -c 600
+          echo; echo "### city.php parametresiz:"
+          curl -sSL -m 20 "https://www.igmg.org/wp-content/plugins/prayer-times/city.php" -H 'User-Agent: Mozilla/5.0' | head -c 600
