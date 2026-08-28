@@ -63,27 +63,51 @@ function kesfet(html) {
   console.log('--- ilk 12 saat:', (html.match(/\b\d{1,2}:\d{2}\b/g) || []).slice(0, 12).join(' '));
 }
 
-/* Diyanet aylik tabloyu veriyor: her satir bir gun, alti vakit.
-   Satirdaki ilk hucre tarih, ardindan Imsak, Gunes, Ogle, Ikindi,
-   Aksam, Yatsi geliyor. */
+/* Diyanet tablosu:
+     <tr><td>28 Ağustos 2026 Cuma</td><td>15 Rebiulevvel 1448</td>
+         <td>04:32</td><td>06:36</td><td>13:45</td><td>17:32</td>
+         <td>20:44</td><td>22:31</td></tr>
+   Tarih sayiyla degil ay adiyla yaziliyor; ilk denemede bunu
+   kacirmistim. Turkce harfler sadelestirilip ay adi eslestiriliyor. */
+
+const AYLAR = ['ocak', 'subat', 'mart', 'nisan', 'mayis', 'haziran',
+               'temmuz', 'agustos', 'eylul', 'ekim', 'kasim', 'aralik'];
+
+function sadelestir(x) {
+  return x.toLowerCase()
+    .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+    .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+    .replace(/â/g, 'a').replace(/î/g, 'i');
+}
+
+function metin(hucre) {
+  return hucre
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n))
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function ayristir(html) {
   const gunler = {};
-  const satirlar = html.match(/<tr[\s\S]*?<\/tr>/gi) || [];
+  for (const satir of html.match(/<tr[\s\S]*?<\/tr>/gi) || []) {
+    const hucre = (satir.match(/<td[\s\S]*?<\/td>/gi) || []).map(metin);
+    if (hucre.length < 8) continue;
 
-  for (const satir of satirlar) {
-    const hucre = (satir.match(/<td[\s\S]*?<\/td>/gi) || [])
-      .map(h => h.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim());
-    if (hucre.length < 7) continue;
-
-    // ilk hucrede gun.ay.yil
-    const t = hucre[0].match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);
+    const t = hucre[0].match(/(\d{1,2})\s+(\S+)\s+(\d{4})/);
     if (!t) continue;
+    const ay = AYLAR.indexOf(sadelestir(t[2]));
+    if (ay < 0) continue;
 
-    const saatler = hucre.slice(1).map(h => (h.match(/^(\d{1,2}:\d{2})$/) || [])[1]).filter(Boolean);
-    if (saatler.length < 6) continue;
+    const saatler = hucre.slice(2, 8)
+      .map(h => (h.match(/^(\d{1,2}):(\d{2})$/) || [])[0])
+      .filter(Boolean);
+    if (saatler.length !== 6) continue;
 
-    const gun = `${t[3]}-${String(t[2]).padStart(2, '0')}-${String(t[1]).padStart(2, '0')}`;
-    gunler[gun] = saatler.slice(0, 6);
+    const gun = `${t[3]}-${String(ay + 1).padStart(2, '0')}-${String(t[1]).padStart(2, '0')}`;
+    gunler[gun] = saatler.map(x => x.padStart(5, '0'));
   }
   return gunler;
 }
