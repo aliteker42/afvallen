@@ -1802,15 +1802,73 @@ function fillSettings() {
     `${Store.data.weights.length} tartı, ${Store.data.meals.length} öğün kaydı · ${(bytes / 1024).toFixed(0)} KB. Ayda bir yedek al.`;
 }
 
-function doExport() {
-  const blob = new Blob([Store.exportJSON()], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `irade-${today()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  toast('Yedek indirildi');
+/* Yedek dışa aktarma.
+
+   APK'nın WebView'inde <a download> ile blob indirme çalışmıyor: indirme
+   yöneticisi bağlı değil, tıklama sessizce hiçbir şey yapmıyordu. Eski kod
+   sonucu hiç kontrol etmeden "indirildi" diyordu — dosya inmiyordu.
+
+   Artık uygulamada dosya gerçekten yazılıyor ve paylaşım sayfası açılıyor;
+   yedeği Drive'a, e-postaya ya da istediğin yere gönderebiliyorsun.
+   Telefonda kalan yedek zayıf yedektir: telefon giderse o da gider. */
+async function disaAktar() {
+  const json = Store.exportJSON();
+  const ad = `irade-${today()}.json`;
+  const C = window.Capacitor;
+  const native = C && typeof C.isNativePlatform === 'function' && C.isNativePlatform();
+  const FS = native && C.Plugins && C.Plugins.Filesystem;
+
+  if (FS) {
+    let uri;
+    try {
+      const r = await FS.writeFile({ path: ad, data: json, directory: 'CACHE', encoding: 'utf8' });
+      uri = r && r.uri;
+    } catch (e) {
+      return { kod: 'hata', ek: e.message };
+    }
+
+    const SH = C.Plugins.Share;
+    if (SH && SH.share) {
+      try {
+        await SH.share({ title: 'İrade yedeği', text: ad, files: [uri] });
+        return { kod: 'paylasildi', ad };
+      } catch (e) {
+        // Paylaşımı iptal etmek hata değil; dosya yazıldı.
+        return { kod: 'yazildi', ad, yer: uri };
+      }
+    }
+    return { kod: 'yazildi', ad, yer: uri };
+  }
+
+  try {
+    const blob = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = ad;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    return { kod: 'indirildi', ad };
+  } catch (e) {
+    return { kod: 'hata', ek: e.message };
+  }
+}
+
+async function doExport() {
+  const btn = $('#btn-export');
+  btn.disabled = true;
+  const eski = btn.textContent;
+  btn.textContent = 'Hazırlanıyor…';
+  try {
+    const r = await disaAktar();
+    if (r.kod === 'paylasildi') toast('Yedek paylaşıldı', 'win');
+    else if (r.kod === 'indirildi') toast('Yedek indirildi', 'win');
+    else if (r.kod === 'yazildi') { toast('Yedek kaydedildi'); alert(`Yedek kaydedildi:\n${r.ad}\n\n${r.yer || ''}`); }
+    else { toast('Yedek alınamadı', 'bad'); alert('Yedek alınamadı: ' + (r.ek || 'bilinmeyen hata')); }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = eski;
+  }
 }
 
 function doImport(e) {
