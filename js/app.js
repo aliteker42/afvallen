@@ -1840,18 +1840,70 @@ async function disaAktar() {
     return { kod: 'yazildi', ad, yer: uri };
   }
 
-  try {
-    const blob = new Blob([json], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = ad;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-    return { kod: 'indirildi', ad };
-  } catch (e) {
-    return { kod: 'hata', ek: e.message };
+  /* Eklenti yoksa — eski kurulumlar da dahil — hiçbir eklenti
+     gerektirmeyen yollar. Web Share zaten fotoğraf paylaşımında
+     kullanılıyor, yani kurulu uygulamada çalışıyor. */
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'İrade yedeği ' + ad, text: json });
+      return { kod: 'paylasildi', ad };
+    } catch (e) {
+      if (e && e.name === 'AbortError') return { kod: 'iptal' };
+      // desteklenmiyorsa aşağıdaki yollara düş
+    }
   }
+
+  if (!native) {
+    try {
+      const blob = new Blob([json], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = ad;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      return { kod: 'indirildi', ad };
+    } catch (e) { /* panoya düş */ }
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(json);
+      return { kod: 'kopyalandi', ad, boyut: json.length };
+    } catch (e) { /* ekrana düş */ }
+  }
+
+  return { kod: 'ekranda', ad, json };
+}
+
+/* Son çare: yedeği ekranda göster, elle kopyalanabilsin */
+function yedegiGoster(json, ad) {
+  let ov = $('#backup-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'backup-overlay';
+    ov.className = 'overlay';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = `
+    <div class="backup-sheet">
+      <div class="label">${escapeHtml(ad)}</div>
+      <div class="hint" style="margin:0 0 10px">Hepsini seç, kopyala ve kendine gönder. Geri yüklerken bu metni bir .json dosyasına yapıştırman yeterli.</div>
+      <textarea id="backup-text" readonly>${escapeHtml(json)}</textarea>
+      <button class="primary-btn" id="backup-copy">Kopyala</button>
+      <button class="ghost-btn" id="backup-close">Kapat</button>
+    </div>`;
+  const ta = $('#backup-text');
+  ta.focus(); ta.select();
+  $('#backup-copy').addEventListener('click', async () => {
+    ta.select();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(json);
+      else document.execCommand('copy');
+      toast('Panoya kopyalandı', 'win');
+    } catch (e) { toast('Kopyalanamadı, elle seç', 'bad'); }
+  });
+  $('#backup-close').addEventListener('click', () => ov.remove());
 }
 
 async function doExport() {
@@ -1864,6 +1916,9 @@ async function doExport() {
     if (r.kod === 'paylasildi') toast('Yedek paylaşıldı', 'win');
     else if (r.kod === 'indirildi') toast('Yedek indirildi', 'win');
     else if (r.kod === 'yazildi') { toast('Yedek kaydedildi'); alert(`Yedek kaydedildi:\n${r.ad}\n\n${r.yer || ''}`); }
+    else if (r.kod === 'kopyalandi') { toast('Yedek panoya kopyalandı', 'win'); alert(`Yedek panoya kopyalandı (${r.boyut} karakter).\n\nKendine gönder: WhatsApp, e-posta ya da not defteri.`); }
+    else if (r.kod === 'ekranda') yedegiGoster(r.json, r.ad);
+    else if (r.kod === 'iptal') toast('Vazgeçildi');
     else { toast('Yedek alınamadı', 'bad'); alert('Yedek alınamadı: ' + (r.ek || 'bilinmeyen hata')); }
   } finally {
     btn.disabled = false;
