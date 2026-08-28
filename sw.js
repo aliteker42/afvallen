@@ -1,7 +1,7 @@
 /* Çevrimdışı önbellek + arka plan bildirimleri */
 importScripts('./js/notify-messages.js');
 
-const CACHE = 'irade-v19';
+const CACHE = 'irade-v20';
 const ASSETS = [
   './',
   './index.html',
@@ -18,6 +18,8 @@ const ASSETS = [
   './js/notify.js',
   './js/deen.js',
   './js/game.js',
+  './js/prayer-data.js',
+  './js/prayer.js',
   './js/reminders.js',
   './js/app.js',
   './icons/icon-192.png',

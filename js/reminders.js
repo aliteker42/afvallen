@@ -15,6 +15,10 @@ const GUNLER = [
   { i: 0, k: 'Paz', u: 'Pazar' }
 ];
 
+/* Bildirim kimlik araligi: hatirlaticilar bu sinirin altinda,
+   namaz vakitleri ustunde. Ikisi birbirinin bildirimini silmesin. */
+const BILDIRIM_SINIR = 1000000;
+
 const Reminders = {
   all() {
     return Store.data.reminders || (Store.data.reminders = []);
@@ -103,10 +107,11 @@ const Reminders = {
     if (!(await this.izinVar(iste))) return { kod: 'izin-yok' };
 
     try {
+      // Yalniz kendi kimlik araligini iptal et: namaz bildirimleri
+      // 1.000.000 ustunde duruyor, onlara dokunulmamali.
       const bekleyen = await P.getPending();
-      if (bekleyen && bekleyen.notifications && bekleyen.notifications.length) {
-        await P.cancel({ notifications: bekleyen.notifications.map(n => ({ id: n.id })) });
-      }
+      const benim = ((bekleyen && bekleyen.notifications) || []).filter(n => n.id < BILDIRIM_SINIR);
+      if (benim.length) await P.cancel({ notifications: benim.map(n => ({ id: n.id })) });
 
       const liste = [];
       for (const r of this.all()) {

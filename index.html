@@ -34,6 +34,21 @@
       <div class="deen-src" id="deen-src">—</div>
     </button>
 
+    <div class="card prayer-card hidden" id="card-prayer">
+      <div class="prayer-next">
+        <div>
+          <div class="label">Sıradaki vakit</div>
+          <div class="prayer-next-name" id="prayer-next-name">—</div>
+        </div>
+        <div class="prayer-next-time">
+          <div class="prayer-next-clock" id="prayer-next-clock">—</div>
+          <div class="prayer-next-left" id="prayer-next-left">—</div>
+        </div>
+      </div>
+      <div class="prayer-row" id="prayer-row"></div>
+      <div class="stat-sub" id="prayer-sub" style="margin:10px 0 0">—</div>
+    </div>
+
     <button class="xp-strip" id="xp-strip">
       <span class="xp-badge" id="xp-icon">🥚</span>
       <span class="xp-body">
@@ -470,6 +485,15 @@
       <div class="hint" id="mode-hint">—</div>
     </div>
 
+    <div class="card" id="card-prayer-set">
+      <div class="label">Namaz vakitleri</div>
+      <label class="switch-row">
+        <span>Vakit girince bildirim gönder</span>
+        <input type="checkbox" id="prayer-notify">
+      </label>
+      <div class="hint" id="prayer-set-hint">—</div>
+    </div>
+
     <div class="card">
       <div class="label">Hatırlatıcılar</div>
       <div id="rem-list" class="rem-list"></div>
@@ -572,6 +596,8 @@
 <script src="js/notify.js"></script>
 <script src="js/deen.js"></script>
 <script src="js/game.js"></script>
+<script src="js/prayer-data.js"></script>
+<script src="js/prayer.js"></script>
 <script src="js/reminders.js"></script>
 <script src="js/app.js"></script>
 </body>

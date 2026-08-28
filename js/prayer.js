@@ -62,6 +62,62 @@ const Prayer = {
     return (this.kayit()[today()] || []).filter(i => KILINAN.includes(i)).length;
   },
 
+  /* --- bildirimler ---
+     Vakitler her gün değiştiği için haftalık tekrar kurulamıyor;
+     önümüzdeki günlerin vakitleri tek tek zamanlanıyor ve uygulama
+     her açıldığında tazeleniyor. Kimlikler 1.000.000 üstünde:
+     hatırlatıcılarla çakışmasın. */
+
+  bildirimAcik() {
+    return Store.data.prayerNotify !== false;
+  },
+  bildirimAyar(v) {
+    Store.data.prayerNotify = !!v;
+    Store.save();
+    return this.zamanla();
+  },
+
+  async zamanla() {
+    const P = Reminders.plugin();
+    if (!P) return { kod: 'tarayici' };
+    if (!this.varMi()) return { kod: 'veri-yok' };
+
+    try {
+      const bekleyen = await P.getPending();
+      const benim = ((bekleyen && bekleyen.notifications) || []).filter(n => n.id >= BILDIRIM_SINIR);
+      if (benim.length) await P.cancel({ notifications: benim.map(n => ({ id: n.id })) });
+
+      if (!this.bildirimAcik()) return { kod: 'kapali' };
+      if (!(await Reminders.izinVar(false))) return { kod: 'izin-yok' };
+
+      const simdi = new Date();
+      const liste = [];
+      for (let g = 0; g < 10; g++) {
+        const t = new Date(simdi.getTime() + g * 86400000);
+        const d = dateKey(t);
+        const vakitler = this.gun(d);
+        if (!vakitler) continue;
+        for (const v of vakitler) {
+          if (!KILINAN.includes(v.i)) continue;         // güneş için bildirim yok
+          const [h, m] = v.saat.split(':').map(Number);
+          const at = new Date(t.getFullYear(), t.getMonth(), t.getDate(), h, m, 0, 0);
+          if (at <= simdi) continue;
+          liste.push({
+            id: BILDIRIM_SINIR + g * 10 + v.i,
+            title: v.ad + ' vakti',
+            body: v.saat + ' · Soest',
+            schedule: { at, allowWhileIdle: true },
+            smallIcon: 'ic_launcher'
+          });
+        }
+      }
+      if (liste.length) await P.schedule({ notifications: liste });
+      return { kod: 'ok', sayi: liste.length };
+    } catch (e) {
+      return { kod: 'hata', ek: e.message };
+    }
+  },
+
   /* Üst üste kaç gün beş vakit tamam */
   seri() {
     let n = 0;

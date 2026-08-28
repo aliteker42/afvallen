@@ -36,6 +36,9 @@ function init() {
   // APK'da izin daha önce verildiyse adımlar sessizce gelir
   syncStepsFromHealth(false);
   Reminders.sync(false);
+  Prayer.zamanla();
+  // sıradaki vakit geri sayımı dakikada bir tazelensin
+  setInterval(renderPrayer, 60000);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) syncStepsFromHealth(false);
   });
@@ -89,7 +92,7 @@ function go(name) {
   if (name === 'yemek') renderMeals();
   if (name === 'sikinti') { renderBoredom(); renderBoss(); renderBadges(); }
   if (name === 'saglik') renderHealth();
-  if (name === 'ayarlar') { fillSettings(); renderReminders(); }
+  if (name === 'ayarlar') { fillSettings(); renderReminders(); renderPrayerSettings(); }
 }
 
 /* ---------------- render ---------------- */
@@ -104,6 +107,7 @@ function renderAll() {
   renderGame();
   renderSteps();
   renderWater();
+  renderPrayer();
   renderTodo();
 }
 
@@ -197,6 +201,7 @@ function renderToday() {
 
   renderSteps();
   renderWater();
+  renderPrayer();
   renderTodo();
   renderDeen();
   $('#coach-text').textContent = Coach.pick('idle');
@@ -516,6 +521,44 @@ function renderBalance() {
     `Yakım ${say(b.toplam)} (dinlenme ${say(b.dinlenme)}${adimKismi}) · yenen ${say(b.yenen)}`;
 }
 
+/* ---------------- namaz vakitleri ---------------- */
+function renderPrayer() {
+  const card = $('#card-prayer');
+  if (!card) return;
+  if (!Prayer.varMi() || !Prayer.gun()) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+
+  const s = Prayer.sirada();
+  if (s) {
+    const sa = Math.floor(s.kalanDk / 60), dk = s.kalanDk % 60;
+    $('#prayer-next-name').textContent = s.ad + (s.yarin ? ' (yarın)' : '');
+    $('#prayer-next-clock').textContent = s.saat;
+    $('#prayer-next-left').textContent = sa > 0 ? `${sa} sa ${dk} dk kaldı` : `${dk} dk kaldı`;
+  }
+
+  const vakitler = Prayer.gun().filter(v => KILINAN.includes(v.i));
+  $('#prayer-row').innerHTML = vakitler.map(v => `
+    <button class="pv ${Prayer.kilindiMi(v.i) ? 'done' : ''} ${s && s.i === v.i && !s.yarin ? 'next' : ''}"
+            data-vakit="${v.i}">
+      <span class="pv-ad">${v.ad}</span>
+      <span class="pv-saat">${v.saat}</span>
+      <span class="pv-tik">${Prayer.kilindiMi(v.i) ? '✓' : ''}</span>
+    </button>`).join('');
+
+  $('#prayer-row').querySelectorAll('[data-vakit]').forEach(b => {
+    b.addEventListener('click', () => {
+      Prayer.isaretle(+b.dataset.vakit);
+      renderPrayer();
+      vibrate(20);
+      if (Prayer.bugunSayi() === KILINAN.length) toast('Beş vakit tamam 🤲', 'win');
+    });
+  });
+
+  const n = Prayer.bugunSayi();
+  const seri = Prayer.seri();
+  $('#prayer-sub').textContent = `${n}/5 kılındı` + (seri > 1 ? ` · ${seri} gün üst üste` : '');
+}
+
 /* ---------------- su ----------------
    Hedef kiloya göre 30 ml/kg, ama 2–3 L arasında tutuluyor: ham hesap
    senin kilonda 3.7 L (15 bardak) çıkıyor ve o kadarı caydırıcı.
@@ -621,6 +664,21 @@ function bindReminders() {
     toast(s.kod === 'ok' ? 'Eklendi, hatırlatma kuruldu' : 'Eklendi', 'win');
     renderReminders();
   });
+}
+
+function renderPrayerSettings(r) {
+  const h = $('#prayer-set-hint');
+  if (!h) return;
+  if (!Prayer.varMi()) { h.textContent = 'Vakit verisi yüklenemedi.'; return; }
+  const g = Object.keys(PRAYER_TIMES).sort();
+  const kaynak = `Diyanet · Soest · ${g[0]} – ${g[g.length - 1]} arası yüklü.`;
+  if (!Reminders.plugin()) { h.textContent = kaynak + ' Bildirimler kurulu uygulamada çalışır.'; return; }
+  const durum = !r ? ''
+    : r.kod === 'ok' ? ` ${r.sayi} bildirim kurulu.`
+    : r.kod === 'kapali' ? ' Bildirimler kapalı.'
+    : r.kod === 'izin-yok' ? ' Bildirim izni gerekiyor.'
+    : r.kod === 'hata' ? ' Kurulamadı: ' + r.ek : '';
+  h.textContent = kaynak + durum;
 }
 
 function renderReminders() {
@@ -1677,6 +1735,19 @@ function bindSettings() {
   });
 
   $('#deen-list-btn').addEventListener('click', showDeenList);
+
+  const pn = $('#prayer-notify');
+  if (pn) {
+    pn.checked = Prayer.bildirimAcik();
+    pn.addEventListener('change', async () => {
+      const r = await Prayer.bildirimAyar(pn.checked);
+      renderPrayerSettings(r);
+      if (pn.checked && r.kod === 'izin-yok') {
+        await Reminders.izinVar(true);
+        renderPrayerSettings(await Prayer.zamanla());
+      }
+    });
+  }
 
   $('#btn-health-test').addEventListener('click', runHealthDiag);
   $('#btn-export').addEventListener('click', doExport);

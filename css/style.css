@@ -620,3 +620,26 @@ body{
 .water-btn.big{background:#E6F4FF;border-color:#7CC4F5;color:#1B6FA8}
 .water-btn.big:active{background:#D3EBFC}
 .bar-fill.water{background:linear-gradient(90deg,#4FA8E0,#7CC4F5)}
+
+/* namaz vakitleri */
+.prayer-card{background:linear-gradient(135deg,#F3EAFF 0%,#EEF4FF 100%);border:1.5px solid #B79FE0}
+.prayer-next{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.prayer-next-name{font-size:22px;font-weight:800;color:#5B3E96;line-height:1.1}
+.prayer-next-time{text-align:right}
+.prayer-next-clock{font-size:22px;font-weight:800;color:#5B3E96;font-variant-numeric:tabular-nums;line-height:1.1}
+.prayer-next-left{font-size:12px;color:#7B5BB8;font-weight:600;margin-top:3px}
+.prayer-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.pv{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 2px;
+  background:rgba(255,255,255,.8);border:1px solid #D6C6F0;border-radius:10px;
+  font:inherit;color:var(--txt);cursor:pointer;transition:background .15s,border-color .15s}
+.pv:active{transform:scale(.97)}
+.pv.next{border-color:#9D7FD4;border-width:2px;background:#FFF}
+.pv.done{background:#E8F7ED;border-color:var(--accent)}
+.pv-ad{font-size:11px;font-weight:700;color:var(--txt-2)}
+.pv.done .pv-ad{color:var(--accent-dim)}
+.pv-saat{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.pv-tik{font-size:11px;font-weight:800;color:var(--accent-dim);height:13px}
+
+.switch-row{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:6px 0;font-size:14.5px;font-weight:600;cursor:pointer}
+.switch-row input{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}

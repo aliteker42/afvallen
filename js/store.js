@@ -19,6 +19,8 @@ const DEFAULTS = {
   boredom: [],   // {id, ts, task, outcome:'resisted'|'ate'}
   steps: {},     // {'YYYY-MM-DD': 8432}
   water: {},     // {'YYYY-MM-DD': 1750}  ml
+  prayers: {},   // {'YYYY-MM-DD': [0,2,3,4,5]} kılınan vakitler
+  prayerNotify: true,
   reminders: [], // {id, nid, t, days:[0-6], time:'10:00', on, doneOn}
   apiKey: '',
   apiModel: 'claude-haiku-4-5',
