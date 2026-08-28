@@ -609,3 +609,14 @@ body{
   border-radius:9px;padding:9px 0;font-size:12px;font-weight:700;cursor:pointer;
   transition:background .15s,color .15s,border-color .15s}
 .day-chip.on{background:var(--accent);border-color:var(--accent);color:#FFF}
+
+/* su */
+.water-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.water-unit{font-size:14px;font-weight:600;color:var(--txt-2);margin-left:6px;letter-spacing:0}
+.water-btns{display:flex;gap:8px;align-items:center;flex:0 0 auto}
+.water-btn{background:var(--card-2);border:1px solid var(--line);color:var(--txt);
+  border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;transition:background .15s}
+.water-btn:active{background:var(--line)}
+.water-btn.big{background:#E6F4FF;border-color:#7CC4F5;color:#1B6FA8}
+.water-btn.big:active{background:#D3EBFC}
+.bar-fill.water{background:linear-gradient(90deg,#4FA8E0,#7CC4F5)}

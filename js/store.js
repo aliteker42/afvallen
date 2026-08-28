@@ -18,6 +18,7 @@ const DEFAULTS = {
   meals: [],     // {id, d, ts, name, kcal, protein, photo}
   boredom: [],   // {id, ts, task, outcome:'resisted'|'ate'}
   steps: {},     // {'YYYY-MM-DD': 8432}
+  water: {},     // {'YYYY-MM-DD': 1750}  ml
   reminders: [], // {id, nid, t, days:[0-6], time:'10:00', on, doneOn}
   apiKey: '',
   apiModel: 'claude-haiku-4-5',
@@ -111,6 +112,18 @@ const Store = {
   },
 
   /* --- sıkıntı --- */
+  /* --- su --- */
+  waterOn(d) {
+    return this.data.water[d || today()] || 0;
+  },
+  addWater(ml, d) {
+    const day = d || today();
+    const v = Math.max(0, (this.data.water[day] || 0) + ml);
+    if (v) this.data.water[day] = v; else delete this.data.water[day];
+    this.save();
+    return v;
+  },
+
   /* --- adımlar --- */
   stepsOn(d) {
     return this.data.steps[d || today()] || 0;

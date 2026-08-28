@@ -14,7 +14,8 @@ const LEVELS = [
 
 const XP = {
   tarti: 10, ogun: 5, direnis: 25, foto_red: 40,
-  temiz_gun: 50, protein_gun: 20, kilometre: 100, gorev: 0, boss: 150
+  temiz_gun: 50, protein_gun: 20, kilometre: 100, gorev: 0, boss: 150,
+  su: 15
 };
 
 const BADGES = [

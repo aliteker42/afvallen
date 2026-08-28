@@ -24,6 +24,7 @@ function init() {
   bindGame();
   bindSteps();
   bindReminders();
+  bindWater();
   updatePhotoHint();
   const settled = Game.settleYesterday();
   renderAll();
@@ -102,6 +103,7 @@ function renderAll() {
   renderHealth();
   renderGame();
   renderSteps();
+  renderWater();
   renderTodo();
 }
 
@@ -194,6 +196,7 @@ function renderToday() {
   renderBalance();
 
   renderSteps();
+  renderWater();
   renderTodo();
   renderDeen();
   $('#coach-text').textContent = Coach.pick('idle');
@@ -511,6 +514,49 @@ function renderBalance() {
   const adimKismi = b.steps > 0 ? ` + ${say(b.steps)} adım ${say(b.adim)}` : '';
   $('#balance-detail').textContent =
     `Yakım ${say(b.toplam)} (dinlenme ${say(b.dinlenme)}${adimKismi}) · yenen ${say(b.yenen)}`;
+}
+
+/* ---------------- su ----------------
+   Hedef kiloya göre 30 ml/kg, ama 2–3 L arasında tutuluyor: ham hesap
+   senin kilonda 3.7 L (15 bardak) çıkıyor ve o kadarı caydırıcı.
+   Bardak 250 ml. */
+const BARDAK = 250;
+
+function waterGoal() {
+  const kg = Store.currentKg();
+  return Math.min(3000, Math.max(2000, Math.round(kg * 30 / 100) * 100));
+}
+
+function bindWater() {
+  $('#btn-water-glass').addEventListener('click', () => {
+    const v = Store.addWater(BARDAK);
+    renderWater();
+    vibrate(20);
+    if (v >= waterGoal() && v - BARDAK < waterGoal()) {
+      toast('Günlük su hedefin tamam 💧', 'win');
+      celebrate(Game.award('su'));
+      renderGame();
+    }
+  });
+  $('#btn-water-minus').addEventListener('click', () => {
+    Store.addWater(-BARDAK);
+    renderWater();
+  });
+}
+
+function renderWater() {
+  const el = $('#water-now');
+  if (!el) return;
+  const ml = Store.waterOn();
+  const hedef = waterGoal();
+  el.textContent = (ml / 1000).toFixed(1).replace('.', ',');
+  $('#water-goal').textContent = (hedef / 1000).toFixed(1).replace('.', ',');
+  $('#bar-water').style.width = Math.min(100, (ml / hedef) * 100) + '%';
+
+  const kalan = Math.max(0, hedef - ml);
+  $('#water-sub').textContent = kalan === 0
+    ? `Hedef tamam · ${Math.round(ml / BARDAK)} bardak`
+    : `${Math.round(ml / BARDAK)} bardak · ${Math.ceil(kalan / BARDAK)} bardak daha`;
 }
 
 /* ---------------- hatırlatıcılar ---------------- */
