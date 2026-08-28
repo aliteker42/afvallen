@@ -13,6 +13,11 @@ on:
         default: false
   schedule:
     - cron: '0 3 1 * *'
+  push:
+    branches:
+      - claude/personal-weight-tracking-app-qgayj5
+    paths:
+      - 'scripts/fetch-prayer-times.js'
 
 permissions:
   contents: write

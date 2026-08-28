@@ -77,8 +77,9 @@ function ayristir(html) {
   const gunler = ayristir(html);
   const sayi = Object.keys(gunler).length;
   if (sayi < 5) {
-    console.error(`Ayristirilamadi: sadece ${sayi} gun bulundu. Sayfa yapisi degismis olabilir.`);
-    console.error('Yapiyi gormek icin: node scripts/fetch-prayer-times.js ' + SEHIR + ' --kesif');
+    console.error(`Ayristirilamadi: sadece ${sayi} gun bulundu.\n`);
+    console.error('--- sayfanin yapisi (parser bunu gore duzeltilecek) ---');
+    kesfet(html);
     process.exit(1);
   }
 
