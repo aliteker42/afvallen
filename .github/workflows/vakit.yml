@@ -1,0 +1,51 @@
+name: Namaz vakitleri
+
+# Diyanet'ten aylik vakitleri cekip js/prayer-data.js olarak isler.
+# Bu ortamdan diyanet.gov.tr'ye erisim engelli; burada calisiyor.
+# Her ayin 1'inde kendiliginden yenilenir.
+
+on:
+  workflow_dispatch:
+    inputs:
+      kesif:
+        description: "Ayristirmadan once sayfa yapisini yaz"
+        type: boolean
+        default: false
+  schedule:
+    - cron: '0 3 1 * *'
+
+permissions:
+  contents: write
+
+jobs:
+  cek:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/personal-weight-tracking-app-qgayj5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Yapiyi incele
+        if: inputs.kesif
+        run: node scripts/fetch-prayer-times.js 13952 --kesif
+
+      - name: Vakitleri cek
+        if: ${{ !inputs.kesif }}
+        run: node scripts/fetch-prayer-times.js 13952
+
+      - name: Degisiklik varsa isle
+        if: ${{ !inputs.kesif }}
+        run: |
+          if git diff --quiet -- js/prayer-data.js; then
+            echo "Vakitler zaten guncel."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/prayer-data.js
+          git commit -m "Namaz vakitlerini Diyanet'ten yenile"
+          git push
