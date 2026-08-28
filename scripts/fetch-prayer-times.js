@@ -12,19 +12,38 @@
 const fs = require('fs');
 const path = require('path');
 
+const { execFileSync } = require('child_process');
+
 const SEHIR = process.argv[2] || '13952';          // Soest, Hollanda
 const KESIF = process.argv.includes('--kesif');
-const URL = `https://namazvakitleri.diyanet.gov.tr/tr-TR/${SEHIR}/`;
+const URL = `https://namazvakitleri.diyanet.gov.tr/tr-TR/${SEHIR}/soest-icin-namaz-vakti`;
 
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+/* Node'un kendi fetch'i Diyanet tarafindan TLS seviyesinde
+   kesiliyordu (ECONNRESET); curl'un TLS yigini gecebiliyor.
+   Once fetch deneniyor, olmazsa curl'e dusuluyor. */
 async function getir(url) {
-  const r = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36',
-      'Accept-Language': 'tr,en;q=0.8'
-    }
-  });
-  if (!r.ok) throw new Error(`HTTP ${r.status} — ${url}`);
-  return r.text();
+  try {
+    const r = await fetch(url, {
+      headers: { 'User-Agent': UA, 'Accept-Language': 'tr,en;q=0.8' }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const t = await r.text();
+    console.log('fetch ile alindi:', t.length, 'bayt');
+    return t;
+  } catch (e) {
+    console.log('fetch olmadi (' + e.message + '), curl deneniyor…');
+    const t = execFileSync('curl', [
+      '-sSL', '--compressed', '-m', '40',
+      '-H', 'User-Agent: ' + UA,
+      '-H', 'Accept-Language: tr,en;q=0.8',
+      '-H', 'Accept: text/html,application/xhtml+xml',
+      url
+    ], { encoding: 'utf8', maxBuffer: 40 * 1024 * 1024 });
+    console.log('curl ile alindi:', t.length, 'bayt');
+    return t;
+  }
 }
 
 function kesfet(html) {
