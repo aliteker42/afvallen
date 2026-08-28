@@ -16,24 +16,43 @@ jobs:
   ara:
     runs-on: ubuntu-latest
     steps:
-      - name: Vakit aracini soek
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Sayfayi gercek tarayiciyla ac
         run: |
-          curl -sSL -m 25 -o /tmp/h.html "https://www.igmg.org/" -H 'User-Agent: Mozilla/5.0'
-
-          echo "### prayer-times eklentisinin dosyalari:"
-          grep -oiE 'https://www\.igmg\.org/wp-content/plugins/prayer-times/[^"'"'"' )]+' /tmp/h.html | sort -u
-
-          echo; echo "### sayfadaki vakit blogu (prayer gecen 400 karakter):"
-          grep -oiE '.{200}prayer-times.{400}' /tmp/h.html | head -3
-
-          echo; echo "### eklentinin JS dosyalari:"
-          for j in $(grep -oiE 'https://www\.igmg\.org/wp-content/plugins/prayer-times/[^"'"'"' )]+\.js' /tmp/h.html | sort -u); do
-            echo "--- $j"
-            curl -sSL -m 20 "$j" -H 'User-Agent: Mozilla/5.0' | head -c 2000
-            echo
-          done
-
-          echo; echo "### city.php dogrudan (slash olmadan):"
-          curl -sSL -m 20 "https://www.igmg.org/wp-content/plugins/prayer-times/city.php?city=Soest" -H 'User-Agent: Mozilla/5.0' | head -c 600
-          echo; echo "### city.php parametresiz:"
-          curl -sSL -m 20 "https://www.igmg.org/wp-content/plugins/prayer-times/city.php" -H 'User-Agent: Mozilla/5.0' | head -c 600
+          npm i -s playwright@latest
+          npx playwright install --with-deps chromium
+          cat > p.js <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const b = await chromium.launch();
+            const pg = await b.newPage();
+            const istekler = [];
+            pg.on('request', r => {
+              const u = r.url();
+              if (/vakit|gebed|prayer|namaz|api|ajax|admin-ajax|json/i.test(u)) istekler.push(r.method() + ' ' + u);
+            });
+            for (const url of ['https://milligorus.nl/islam/gebedstijden', 'https://igmg.nl/']) {
+              console.log('\n######## ' + url);
+              try {
+                await pg.goto(url, { waitUntil: 'networkidle', timeout: 45000 });
+              } catch (e) { console.log('  yuklenemedi: ' + e.message); continue; }
+              const govde = await pg.evaluate(() => document.body.innerText);
+              // saat gecen satirlari yaz
+              const satir = govde.split('\n').map(x => x.trim()).filter(x => /\d{1,2}[:.]\d{2}/.test(x));
+              console.log('  saat gecen satirlar (' + satir.length + '):');
+              satir.slice(0, 25).forEach(x => console.log('    ' + x.slice(0, 120)));
+              const sehir = await pg.evaluate(() =>
+                [...document.querySelectorAll('select option')].map(o => o.textContent.trim()).slice(0, 40));
+              if (sehir.length) console.log('  sehir secenekleri: ' + sehir.join(', '));
+              const soest = await pg.evaluate(() => document.body.innerText.match(/.{60}Soest.{60}/i)?.[0] || '');
+              if (soest) console.log('  Soest gecen yer: ' + soest.replace(/\n/g, ' '));
+            }
+            console.log('\n######## ilgili ag istekleri:');
+            [...new Set(istekler)].slice(0, 25).forEach(x => console.log('  ' + x));
+            await b.close();
+          })();
+JS
+          node p.js
