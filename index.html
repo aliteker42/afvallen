@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>İrade</title>
+<meta name="description" content="Kişisel kilo takip ve can sıkıntısı savunma uygulaması">
+<meta name="theme-color" content="#F6F8FA">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="İrade">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ BUGÜN ============ -->
+  <section class="page" id="page-bugun">
+    <header class="hdr">
+      <div>
+        <div class="hdr-sub" id="hdr-date">—</div>
+        <h1 class="hdr-title">Bugün</h1>
+      </div>
+      <button class="icon-btn btn-settings" aria-label="Ayarlar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m3.08-3.08l4.24-4.24"></path></svg></button>
+    </header>
+
+    <button class="card deen" id="card-deen">
+      <div class="deen-text" id="deen-text">—</div>
+      <div class="deen-src" id="deen-src">—</div>
+    </button>
+
+    <div class="card prayer-card hidden" id="card-prayer">
+      <div class="prayer-next">
+        <div>
+          <div class="label">Sıradaki vakit</div>
+          <div class="prayer-next-name" id="prayer-next-name">—</div>
+        </div>
+        <div class="prayer-next-time">
+          <div class="prayer-next-clock" id="prayer-next-clock">—</div>
+          <div class="prayer-next-left" id="prayer-next-left">—</div>
+        </div>
+      </div>
+      <div class="prayer-row" id="prayer-row"></div>
+      <div class="stat-sub" id="prayer-sub" style="margin:10px 0 0">—</div>
+    </div>
+
+    <button class="xp-strip" id="xp-strip">
+      <span class="xp-badge" id="xp-icon">🥚</span>
+      <span class="xp-body">
+        <span class="xp-top">
+          <span class="xp-title" id="xp-title">Çaylak</span>
+          <span class="xp-num" id="xp-num">0 XP</span>
+        </span>
+        <span class="xp-track"><span class="xp-fill" id="xp-fill"></span></span>
+        <span class="xp-next" id="xp-next">—</span>
+      </span>
+    </button>
+
+    <div class="hero card">
+      <div class="hero-top">
+        <div>
+          <div class="label">Şu anki kilo</div>
+          <div class="big-num"><span id="hero-weight">—</span><span class="unit">kg</span></div>
+          <div class="hero-delta" id="hero-delta">—</div>
+        </div>
+        <div class="hero-bmi">
+          <div class="label">BMI</div>
+          <div class="bmi-val" id="hero-bmi">—</div>
+          <div class="bmi-tag" id="hero-bmi-tag">—</div>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-labels">
+          <span id="prog-start" class="prog-start">—</span>
+          <span id="prog-now" class="prog-now">—</span>
+          <span id="prog-goal" class="prog-goal-simple">—</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="prog-fill"></div>
+          <div class="progress-marker" id="prog-marker"></div>
+        </div>
+        <div class="progress-caption" id="prog-caption">—</div>
+      </div>
+    </div>
+
+    <div class="card goal-card">
+      <div class="label">Hedef Kilo</div>
+      <div class="goal-display">
+        <div class="goal-num" id="goal-weight">—</div>
+        <div class="goal-info" id="goal-info">—</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card stat" id="card-kcal">
+        <div class="label">Kalan kalori</div>
+        <div class="stat-num" id="stat-kcal">—</div>
+        <div class="stat-sub" id="stat-kcal-sub">hedef —</div>
+        <div class="bar"><div class="bar-fill" id="bar-kcal"></div></div>
+      </div>
+      <div class="card stat" id="card-protein">
+        <div class="label">Protein</div>
+        <div class="stat-num" id="stat-protein">—</div>
+        <div class="stat-sub" id="stat-protein-sub">hedef —</div>
+        <div class="bar"><div class="bar-fill protein" id="bar-protein"></div></div>
+      </div>
+    </div>
+
+    <div class="card grams-card">
+      <div class="label">Bugünün tahmini kaybı</div>
+      <div class="grams-text" id="today-grams">—</div>
+      <div class="balance-line" id="balance-line">—</div>
+      <div class="balance-now" id="balance-now">—</div>
+      <div class="balance-detail" id="balance-detail">—</div>
+      <div class="hint" style="margin-top:8px">Üstteki gün sonu tahmini; alttaki şu ana kadar gerçekleşen. 1 kg ≈ 7700 kcal.</div>
+    </div>
+
+    <button class="card stat steps-card" id="card-steps">
+      <div class="steps-head">
+        <div class="steps-body">
+          <div class="label">Adımlar</div>
+          <div class="stat-num" id="stat-steps">—</div>
+          <div class="stat-sub" id="stat-steps-sub">dokun ve gir</div>
+        </div>
+        <span class="steps-ic">👟</span>
+      </div>
+    </button>
+
+    <div class="card water-card">
+      <div class="water-head">
+        <div>
+          <div class="label">Su</div>
+          <div class="stat-num"><span id="water-now">0</span><span class="water-unit">/ <span id="water-goal">3.0</span> L</span></div>
+        </div>
+        <div class="water-btns">
+          <button class="water-btn" id="btn-water-minus" aria-label="Geri al">−</button>
+          <button class="water-btn big" id="btn-water-glass">+ Bardak</button>
+        </div>
+      </div>
+      <div class="bar"><div class="bar-fill water" id="bar-water"></div></div>
+      <div class="stat-sub" id="water-sub" style="margin:8px 0 0">—</div>
+    </div>
+
+    <button class="panic-btn" id="btn-panic">
+      <svg class="panic-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><line x1="12" y1="7" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span class="panic-text">CANIM SIKILIYOR</span>
+      <span class="panic-sub">90 saniye ver bana</span>
+    </button>
+
+    <div class="card next-milestone" id="card-milestone">
+      <div class="label">Sıradaki kilometre taşı</div>
+      <div class="ms-row">
+        <div class="ms-num" id="ms-weight">—</div>
+        <div class="ms-info">
+          <div class="ms-title" id="ms-title">—</div>
+          <div class="ms-eta" id="ms-eta">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card gain-teaser" id="card-gain">
+      <div class="gain-icon" id="gain-icon">🩸</div>
+      <div class="gain-body">
+        <div class="label" style="margin-bottom:2px">Sıradaki sağlık kazanımı</div>
+        <div class="gain-title" id="gain-title">—</div>
+        <div class="gain-need" id="gain-need">—</div>
+      </div>
+    </div>
+
+    <div class="card coach" id="card-coach">
+      <div class="coach-icon">💬</div>
+      <div class="coach-text" id="coach-text">—</div>
+    </div>
+
+    <div class="card hidden" id="card-todo">
+      <div class="chart-head">
+        <div class="label">Bugün yapılacaklar</div>
+        <div class="quest-count" id="todo-count">0/0</div>
+      </div>
+      <div id="todo-list" class="todo-list"></div>
+    </div>
+
+    <div class="card quests">
+      <div class="chart-head">
+        <div class="label">Günün görevleri</div>
+        <div class="quest-count" id="quest-count">0/3</div>
+      </div>
+      <div id="quest-list" class="quest-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="chart-head">
+        <div class="label">Tartı serisi</div>
+        <div class="streak-pill" id="streak-pill">🔥 0 gün</div>
+      </div>
+      <div id="streak-cal" class="streak-cal"></div>
+    </div>
+
+    <div class="quick-actions">
+      <button class="qa" data-goto="tarti">⚖️ Tartıl</button>
+      <button class="qa" data-goto="yemek">🍽 Yemek ekle</button>
+    </div>
+  </section>
+
+  <!-- ============ TARTI ============ -->
+  <section class="page hidden" id="page-tarti">
+    <header class="hdr"><h1 class="hdr-title">Tartı</h1><button class="icon-btn btn-settings" aria-label="Ayarlar">⚙</button></header>
+
+    <div class="card weigh-in">
+      <div class="label">Bugünün kilosu</div>
+      <div class="weigh-row">
+        <button class="step-btn" id="w-minus">−</button>
+        <input type="number" id="w-input" inputmode="decimal" step="0.1" placeholder="127.7">
+        <button class="step-btn" id="w-plus">+</button>
+      </div>
+      <button class="primary-btn" id="btn-save-weight">Kaydet</button>
+      <div class="hint" id="weigh-hint">Her sabah, tuvaletten sonra, aç karnına.</div>
+    </div>
+
+    <div class="card">
+      <div class="chart-head">
+        <div class="label">Gidişat</div>
+        <div class="range-tabs">
+          <button class="rt active" data-range="30">30g</button>
+          <button class="rt" data-range="90">90g</button>
+          <button class="rt" data-range="365">1y</button>
+          <button class="rt" data-range="0">Hepsi</button>
+        </div>
+      </div>
+      <div id="chart-host"></div>
+      <div class="chart-legend">
+        <span><i class="dot raw"></i>Günlük</span>
+        <span><i class="dot trend"></i>Trend (7g)</span>
+        <span><i class="dot goal"></i>Hedef</span>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card mini"><div class="label">7 gün</div><div class="mini-num" id="d7">—</div></div>
+      <div class="card mini"><div class="label">30 gün</div><div class="mini-num" id="d30">—</div></div>
+      <div class="card mini"><div class="label">Toplam</div><div class="mini-num" id="dtotal">—</div></div>
+    </div>
+
+    <div class="card">
+      <div class="label">Kilometre taşları</div>
+      <div id="milestone-list" class="ms-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="label">Geçmiş</div>
+      <div id="weight-history" class="history"></div>
+    </div>
+  </section>
+
+  <!-- ============ YEMEK ============ -->
+  <section class="page hidden" id="page-yemek">
+    <header class="hdr">
+      <div>
+        <div class="hdr-sub" id="yemek-date">—</div>
+        <h1 class="hdr-title">Yemek</h1>
+      </div>
+      <button class="icon-btn btn-settings" aria-label="Ayarlar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m3.08-3.08l4.24-4.24"></path></svg></button>
+    </header>
+
+    <div class="card date-nav">
+      <div class="date-controls">
+        <button class="date-btn" id="btn-prev-day">← Dün</button>
+        <button class="date-btn date-today" id="btn-today">Bugün</button>
+        <button class="date-btn" id="btn-next-day">Yarın →</button>
+      </div>
+      <input type="date" id="meal-date-picker" style="width:100%; padding:8px; margin-top:8px; border:1px solid var(--line); border-radius:8px;">
+    </div>
+
+    <div class="card day-summary">
+      <div class="ds-item"><div class="ds-num" id="ds-kcal">0</div><div class="label">kcal</div></div>
+      <div class="ds-item"><div class="ds-num" id="ds-protein">0</div><div class="label">protein</div></div>
+      <div class="ds-item"><div class="ds-num" id="ds-left">0</div><div class="label">kalan</div></div>
+    </div>
+
+    <div class="card motivation" id="card-motivation">
+      <div class="motivation-text" id="motivation-text">—</div>
+    </div>
+
+    <div class="photo-zone card">
+      <div class="label">Fotoğrafla ekle</div>
+      <label class="photo-btn" for="photo-input">
+        <svg class="photo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        <span>Yemeğin fotoğrafını çek</span>
+      </label>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" hidden>
+      <div class="hint" id="photo-hint">Analiz için Ayarlar'dan Claude API anahtarını gir. Anahtarsız da fotoğrafı kaydedip kaloriyi elle yazabilirsin.</div>
+      <div id="photo-result" class="photo-result hidden"></div>
+    </div>
+
+    <div class="card">
+      <div class="label">Elle ekle</div>
+      <div class="meal-form">
+        <input type="text" id="meal-name" placeholder="Ne yedin?" list="food-list" autocomplete="off">
+        <datalist id="food-list"></datalist>
+        <div class="meal-row">
+          <input type="number" id="meal-kcal" inputmode="numeric" placeholder="kcal">
+          <input type="number" id="meal-protein" inputmode="numeric" placeholder="protein g">
+          <button class="primary-btn small" id="btn-add-meal">Ekle</button>
+        </div>
+      </div>
+      <div class="quick-foods" id="quick-foods"></div>
+    </div>
+
+    <div class="card">
+      <div class="label">Bugün yenenler</div>
+      <div id="meal-list" class="meal-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ SIKINTI ============ -->
+  <section class="page hidden" id="page-sikinti">
+    <header class="hdr"><h1 class="hdr-title">Sıkıntı</h1><button class="icon-btn btn-settings" aria-label="Ayarlar">⚙</button></header>
+
+    <div class="card streak-card">
+      <div class="streak-num" id="streak-num">0</div>
+      <div class="streak-label">kere yemeden atlattın</div>
+      <div class="streak-sub" id="streak-sub">—</div>
+    </div>
+
+    <button class="panic-btn" id="btn-panic-2">
+      <span class="panic-icon">🛑</span>
+      <span class="panic-text">CANIM SIKILIYOR</span>
+      <span class="panic-sub">90 saniye ver bana</span>
+    </button>
+
+    <div class="card boss-card">
+      <div class="chart-head">
+        <div class="label">Haftanın duvarı</div>
+        <div class="boss-hp-text" id="boss-hp-text">—</div>
+      </div>
+      <div class="boss-stage">
+        <div class="boss-face" id="boss-face">🧱</div>
+        <div class="boss-name">Can Sıkıntısı Duvarı</div>
+      </div>
+      <div class="boss-bar"><div class="boss-fill" id="boss-fill"></div></div>
+      <div class="hint" id="boss-hint">—</div>
+    </div>
+
+    <div class="card">
+      <div class="chart-head">
+        <div class="label">Rozetler</div>
+        <div class="quest-count" id="badge-count">0/18</div>
+      </div>
+      <div id="badge-grid" class="badge-grid"></div>
+    </div>
+
+    <div class="card">
+      <div class="label">Gerçekten aç mıyım?</div>
+      <button class="secondary-btn" id="btn-hunger-test">3 soruluk teste başla</button>
+    </div>
+
+    <div class="card">
+      <div class="label">Son kayıtlar</div>
+      <div id="boredom-log" class="history"></div>
+    </div>
+  </section>
+
+  <!-- ============ SAĞLIK ============ -->
+  <section class="page hidden" id="page-saglik">
+    <header class="hdr">
+      <h1 class="hdr-title">Sağlık</h1>
+      <button class="icon-btn btn-settings" aria-label="Ayarlar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m3.08-3.08l4.24-4.24"></path></svg></button>
+    </header>
+
+    <div class="card gains-summary">
+      <div class="gs-row">
+        <div class="gs-item"><div class="gs-num" id="gs-lost">0.0</div><div class="label">kg verildi</div></div>
+        <div class="gs-item"><div class="gs-num" id="gs-bp">−0</div><div class="label">mmHg tansiyon</div></div>
+        <div class="gs-item"><div class="gs-num" id="gs-load">0</div><div class="label">kg diz yükü</div></div>
+      </div>
+      <div class="hint" id="gs-hint">—</div>
+    </div>
+
+    <div id="tracks-host"></div>
+
+    <div class="card disclaimer">
+      Buradaki rakamlar bilimsel ortalamalara dayalı tahminlerdir, kişisel tıbbi tavsiye değildir.
+      Tansiyon ilacı kullanıyorsan kilo verirken dozun düşmesi gerekebilir — bunu <b>kendi başına değil, doktorunla</b> yap.
+      Göğüs ağrısı, şiddetli nefes darlığı veya gece boğulma hissi varsa bekleme, hekime görün.
+    </div>
+  </section>
+
+  <!-- ============ AYARLAR ============ -->
+  <section class="page hidden" id="page-ayarlar">
+    <header class="hdr"><h1 class="hdr-title">Ayarlar</h1></header>
+
+    <div class="card">
+      <div class="label">Profil</div>
+      <div class="form-row"><label>Boy (cm)</label><input type="number" id="set-height"></div>
+      <div class="form-row"><label>Yaş</label><input type="number" id="set-age"></div>
+      <div class="form-row"><label>Cinsiyet</label>
+        <select id="set-sex"><option value="m">Erkek</option><option value="f">Kadın</option></select>
+      </div>
+      <div class="form-row"><label>Hareket</label>
+        <select id="set-activity">
+          <option value="1.2">Masa başı</option>
+          <option value="1.375">Hafif hareketli</option>
+          <option value="1.55">Orta hareketli</option>
+          <option value="1.725">Çok hareketli</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Hedefler</div>
+      <div class="form-row"><label>Başlangıç (kg)</label><input type="number" id="set-start" step="0.1"></div>
+      <div class="form-row"><label>Hedef (kg)</label><input type="number" id="set-goal" step="0.1"></div>
+      <div class="form-row"><label>Günlük kalori</label><input type="number" id="set-kcal"></div>
+      <div class="form-row"><label>Günlük protein (g)</label><input type="number" id="set-protein"></div>
+      <button class="secondary-btn" id="btn-recalc">Bana göre otomatik hesapla</button>
+      <div class="hint" id="tdee-hint">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Koç tonu</div>
+      <div class="tone-picker" id="tone-picker">
+        <button class="tone" data-tone="sert">Sert</button>
+        <button class="tone" data-tone="soguk">Soğuk / rakamsal</button>
+        <button class="tone" data-tone="koc">Koç</button>
+      </div>
+      <div class="hint">Kötü günde "Koç"a al, iyi günde "Sert"e.</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Âyet ve hadisler</div>
+      <div class="form-row">
+        <label>Günlük hatırlatma</label>
+        <button class="toggle" id="deen-toggle" role="switch" aria-checked="true"><span></span></button>
+      </div>
+      <div class="hint">Kilo, yeme-içme ve nefse hâkimiyetle ilgili 9 metin. Her birinin kaynağı (sûre/âyet ya da hadis külliyatı ve numarası) altında yazılı — istediğin an kontrol edebilirsin. Meal ve numaralar birden fazla bağımsız kaynakla karşılaştırıldı.</div>
+      <button class="secondary-btn" id="deen-list-btn">Hepsini kaynaklarıyla gör</button>
+    </div>
+
+    <div class="card">
+      <div class="label">Bildirimler</div>
+      <div class="form-row">
+        <label>Hatırlatmalar</label>
+        <button class="toggle" id="ntf-toggle" role="switch" aria-checked="false"><span></span></button>
+      </div>
+      <div id="ntf-slots" class="ntf-slots"></div>
+      <button class="secondary-btn" id="ntf-test">Deneme bildirimi gönder</button>
+      <div class="hint" id="ntf-hint">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Fotoğraf analizi</div>
+      <div class="sub-label">Her fotoğrafta üçü de karşına çıkar. Buradaki seçim hangisinin başta duracağını belirler.</div>
+      <div class="mode-picker" id="mode-picker">
+        <button class="mode" data-mode="app">
+          <div class="mode-t">📲 Telefondaki uygulama</div>
+          <div class="mode-d">Fotoğrafı Claude ya da ChatGPT uygulamasına gönder, cevabı geri yapıştır. <b>Ücretsiz</b> — mevcut aboneliğini kullanır.</div>
+        </button>
+        <button class="mode" data-mode="api">
+          <div class="mode-t">⚡ Doğrudan API</div>
+          <div class="mode-d">Tek dokunuş, uygulamadan çıkmadan. API anahtarı ve fotoğraf başına ~0.1 cent gerekir.</div>
+        </button>
+        <button class="mode" data-mode="off">
+          <div class="mode-t">✍️ Kapalı</div>
+          <div class="mode-d">Fotoğraf kaydedilir, kaloriyi elle yazarsın.</div>
+        </button>
+      </div>
+
+      <div id="api-settings" class="api-block">
+        <div class="form-row"><label>Claude API anahtarı</label><input type="password" id="set-apikey" placeholder="sk-ant-..."></div>
+        <div class="form-row"><label>Model</label>
+          <select id="set-model">
+            <option value="claude-haiku-4-5">Ucuz (Haiku 4.5)</option>
+            <option value="claude-sonnet-5">İsabetli (Sonnet 5)</option>
+          </select>
+        </div>
+        <div class="usage-box" id="usage-box">—</div>
+        <div class="hint">Anahtar sadece bu telefonda saklanır. Fotoğraf doğrudan Anthropic'e gider, arada başka sunucu yok.</div>
+      </div>
+      <div class="hint" id="mode-hint">—</div>
+    </div>
+
+    <div class="card" id="card-prayer-set">
+      <div class="label">Namaz vakitleri</div>
+      <label class="switch-row">
+        <span>Vakit girince bildirim gönder</span>
+        <input type="checkbox" id="prayer-notify">
+      </label>
+      <div class="hint" id="prayer-set-hint">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Hatırlatıcılar</div>
+      <div id="rem-list" class="rem-list"></div>
+      <div class="rem-form">
+        <input type="text" id="rem-text" placeholder="Ne yapmam gerek? (ör. Temizlik yap)" maxlength="80">
+        <div class="day-picker" id="rem-days"></div>
+        <div class="rem-row">
+          <input type="time" id="rem-time" value="10:00">
+          <button class="primary-btn small" id="btn-rem-add">Ekle</button>
+        </div>
+      </div>
+      <div class="hint" id="rem-hint">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Adım bağlantısı</div>
+      <button class="secondary-btn" id="btn-health-test">Sağlık bağlantısını sına</button>
+      <div id="health-diag" class="health-diag hidden"></div>
+      <div class="hint">Adımlar Health Connect'ten okunur. Samsung Health ya da Google Fit oraya yazmıyorsa veri gelmez.</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Yedek</div>
+      <button class="secondary-btn" id="btn-export">Yedeği indir (JSON)</button>
+      <label class="secondary-btn as-label" for="import-input">Yedekten geri yükle</label>
+      <input type="file" id="import-input" accept="application/json" hidden>
+      <div class="hint" id="backup-hint">Tüm veriler telefonunda. Ayda bir yedek al.</div>
+    </div>
+
+    <div class="card danger-zone">
+      <button class="danger-btn" id="btn-reset">Tüm verileri sil</button>
+    </div>
+
+    <div class="version">İrade · <span id="build-stamp">eca7cc4</span></div>
+  </section>
+
+  <!-- ============ NAV ============ -->
+  <nav class="tabbar">
+    <button class="tab active" data-goto="bugun"><svg class="icon-nav" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Bugün</button>
+    <button class="tab" data-goto="tarti"><svg class="icon-nav" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"></circle><path d="M12 17V6m-8 11h16M4 18h16"></path></svg>Tartı</button>
+    <button class="tab" data-goto="yemek"><svg class="icon-nav" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V2M3 13h16M5 2h14v8H5z"></path><path d="M15 13v8M9 13v8M3 13v8"></path></svg>Yemek</button>
+    <button class="tab" data-goto="sikinti"><svg class="icon-nav" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>Sıkıntı</button>
+    <button class="tab" data-goto="saglik"><svg class="icon-nav" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>Sağlık</button>
+  </nav>
+</div>
+
+<!-- ============ PANIC OVERLAY ============ -->
+<div class="overlay hidden" id="overlay-panic">
+  <div class="panic-screen">
+    <div class="panic-stage" id="panic-stage-1">
+      <div class="panic-h">Dur.</div>
+      <div class="panic-p" id="panic-msg">—</div>
+      <div class="panic-deen" id="panic-deen">
+        <div class="deen-mark">﴾﴿</div>
+        <div class="deen-text" id="panic-deen-text">—</div>
+        <div class="deen-src" id="panic-deen-src">—</div>
+      </div>
+      <div class="timer-ring">
+        <svg viewBox="0 0 120 120">
+          <circle class="ring-bg" cx="60" cy="60" r="54"></circle>
+          <circle class="ring-fg" id="ring-fg" cx="60" cy="60" r="54"></circle>
+        </svg>
+        <div class="timer-num" id="timer-num">90</div>
+      </div>
+      <div class="task-card" id="task-card">—</div>
+      <div class="panic-actions">
+        <button class="primary-btn wide" id="btn-panic-done">Yaptım, geçti 💪</button>
+        <button class="ghost-btn" id="btn-panic-ate">Yine de yedim</button>
+      </div>
+      <button class="ghost-btn small" id="btn-panic-another">Başka bir şey ver</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HUNGER TEST OVERLAY ============ -->
+<div class="overlay hidden" id="overlay-hunger">
+  <div class="panic-screen">
+    <div class="hunger-q">
+      <div class="q-count" id="q-count">1/3</div>
+      <div class="panic-h" id="q-text">—</div>
+      <div class="panic-actions">
+        <button class="primary-btn wide" id="q-yes">Evet</button>
+        <button class="secondary-btn wide" id="q-no">Hayır</button>
+      </div>
+      <button class="ghost-btn small" id="btn-hunger-close">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="js/data.js"></script>
+<script src="js/store.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/health.js"></script>
+<script src="js/coach.js"></script>
+<script src="js/photo.js"></script>
+<script src="js/notify-messages.js"></script>
+<script src="js/notify.js"></script>
+<script src="js/deen.js"></script>
+<script src="js/game.js"></script>
+<script src="js/prayer-data.js"></script>
+<script src="js/prayer.js"></script>
+<script src="js/reminders.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
