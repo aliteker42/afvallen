@@ -45,12 +45,14 @@ jobs:
       - name: Degisiklik varsa isle
         if: ${{ !inputs.kesif }}
         run: |
-          if git diff --quiet -- js/prayer-data.js; then
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Once ekle: 'git diff' izlenmeyen dosyayi gormez, ilk uretimde
+          # degisiklik yok sanip isleme adimini atliyordu.
+          git add js/prayer-data.js
+          if git diff --cached --quiet; then
             echo "Vakitler zaten guncel."
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add js/prayer-data.js
           git commit -m "Namaz vakitlerini Diyanet'ten yenile"
           git push

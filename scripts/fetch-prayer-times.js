@@ -138,5 +138,6 @@ const PRAYER_TIMES = ${JSON.stringify(gunler, null, 0)};
   const ilk = Object.keys(gunler).sort()[0];
   const son = Object.keys(gunler).sort().pop();
   console.log(`${sayi} gun yazildi: ${ilk} → ${son}`);
+  console.log('dosya boyutu:', fs.statSync(path.join(__dirname, '..', 'js', 'prayer-data.js')).size, 'bayt');
   console.log('ornek', ilk, '→', gunler[ilk].join('  '));
 })();
